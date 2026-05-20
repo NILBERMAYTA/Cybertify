@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+@import './terminal.css';
+
+@theme {
+  --color-cyber-night: #05070f;
+  --color-cyber-panel: #0b1020;
+  --color-cyber-cyan: #00f5ff;
+  --color-cyber-pink: #ff2ed6;
+  --color-cyber-ice: #e9fbff;
+  --color-cyber-muted: #8da8b7;
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #05070f;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

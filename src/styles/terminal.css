@@ -1,0 +1,176 @@
+.terminal-shell {
+  --primary: #ff2ed6;
+  --secondary: #00f5ff;
+  --terminal-bg: #08040a;
+  position: relative;
+  isolation: isolate;
+}
+
+.terminal-aurora {
+  position: fixed;
+  inset: -18%;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(0, 245, 255, 0.22), transparent 27%),
+    radial-gradient(circle at 82% 22%, rgba(255, 46, 214, 0.18), transparent 25%),
+    radial-gradient(circle at 52% 84%, rgba(134, 255, 89, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(8, 4, 10, 0.2), var(--terminal-bg));
+  filter: saturate(1.2);
+  will-change: transform;
+}
+
+.terminal-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.78;
+}
+
+.terminal-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.035), transparent 18%),
+    linear-gradient(245deg, rgba(255, 255, 255, 0.025), transparent 16%);
+  mix-blend-mode: overlay;
+  opacity: 0.32;
+}
+
+.terminal-frame,
+.neon-border {
+  border: 1px solid var(--primary);
+  background: rgba(37, 4, 20, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 46, 214, 0.2) inset,
+    0 0 18px rgba(255, 46, 214, 0.34),
+    0 0 36px rgba(0, 245, 255, 0.08);
+}
+
+.terminal-panel {
+  backdrop-filter: blur(8px);
+  contain: content;
+  content-visibility: auto;
+  contain-intrinsic-size: 260px;
+}
+
+.terminal-panel header {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.terminal-dashboard {
+  grid-template-areas:
+    'left lyrics'
+    'bottom bottom';
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.terminal-left {
+  grid-area: left;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.terminal-lyrics {
+  grid-area: lyrics;
+}
+
+.terminal-bottom {
+  grid-area: bottom;
+}
+
+.terminal-button {
+  border: 1px solid rgba(0, 245, 255, 0.35);
+  background: rgba(5, 7, 15, 0.86);
+  color: #e9fbff;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  padding: 0.75rem 1rem;
+  text-transform: uppercase;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.terminal-button:hover {
+  border-color: #00f5ff;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.24);
+  color: #00f5ff;
+}
+
+.terminal-button-primary {
+  border-color: rgba(255, 46, 214, 0.65);
+  color: #ff2ed6;
+}
+
+.scanline-overlay {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.028) 0,
+    rgba(255, 255, 255, 0.028) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.22;
+}
+
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  text-shadow:
+    2px 0 #00f5ff,
+    -2px 0 #ff2ed6;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  position: absolute;
+  inset: 0;
+  content: attr(data-text);
+  pointer-events: none;
+}
+
+.glitch-text::before {
+  color: var(--secondary);
+  transform: translate(1px, 0);
+  clip-path: inset(0 0 58% 0);
+  opacity: 0.55;
+}
+
+.glitch-text::after {
+  color: var(--primary);
+  transform: translate(-1px, 0);
+  clip-path: inset(62% 0 0 0);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-aurora {
+    transform: none;
+  }
+
+  .terminal-button {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .terminal-dashboard {
+    grid-template-areas:
+      'left'
+      'lyrics'
+      'bottom';
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(360px, 1fr) auto;
+  }
+}

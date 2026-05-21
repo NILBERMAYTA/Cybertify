@@ -37,7 +37,6 @@ function TerminalLayoutComponent() {
   const setPendingTrackUri = usePlayerStore((state) => state.setPendingTrackUri)
   const setPlaybackState = usePlayerStore((state) => state.setPlaybackState)
   const trackName = usePlayerStore((state) => state.trackName)
-  const webPlaybackStatus = usePlayerStore((state) => state.webPlaybackStatus)
   const [devices, setDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
   const [volumePercent, setVolumePercent] = useState(50)
@@ -253,23 +252,6 @@ function TerminalLayoutComponent() {
             <PlayerCard />
 
             <div className="mt-4 border-t border-[#333] pt-3">
-              <p className="mb-2 text-xs uppercase text-[#666]">{webPlaybackStatus}</p>
-              <label className="mb-1 block text-xs uppercase text-[#999]" htmlFor="player-device">
-                Device
-              </label>
-              <select
-                className="mb-3 w-full border border-[#444] bg-[#222] px-3 py-2 text-xs text-[#ddd] outline-none"
-                id="player-device"
-                onChange={(event) => void handleDeviceChange(event.target.value)}
-                value={selectedDeviceId}
-              >
-                <option value="">No device found</option>
-                {devices.map((device) => (
-                  <option disabled={!device.id} key={device.id ?? device.name} value={device.id ?? ''}>
-                    {device.name} {device.is_active ? '(active)' : ''}
-                  </option>
-                ))}
-              </select>
               <PlayerControls
                 durationMs={durationMs}
                 isPlaying={isPlaying}
@@ -281,6 +263,24 @@ function TerminalLayoutComponent() {
                 progressMs={progressMs}
                 volumePercent={volumePercent}
               />
+              <div className="mt-4 border-t border-[#333] pt-3">
+                <label className="mb-1 block text-xs uppercase text-[#999]" htmlFor="player-device">
+                  Device
+                </label>
+                <select
+                  className="w-full border border-[#444] bg-[#222] px-3 py-2 text-xs text-[#ddd] outline-none"
+                  id="player-device"
+                  onChange={(event) => void handleDeviceChange(event.target.value)}
+                  value={selectedDeviceId}
+                >
+                  <option value="">No device found</option>
+                  {devices.map((device) => (
+                    <option disabled={!device.id} key={device.id ?? device.name} value={device.id ?? ''}>
+                      {device.name} {device.is_active ? '(active)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </TerminalPanel>
 
@@ -289,7 +289,7 @@ function TerminalLayoutComponent() {
             <header className="border-b border-[#333] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
               lyrics
             </header>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="h-[60%] p-4 min-h-[150px] overflow-hidden border-b border-[#333]">
               <LyricsPanel
                 albumName={albumName}
                 artistName={artistName}
@@ -298,7 +298,7 @@ function TerminalLayoutComponent() {
                 trackName={trackName}
               />
             </div>
-            <div className="flex min-h-[100px] flex-1 border-t border-[#333]">
+            <div className="flex-1 px-4 py-2 opacity-70 min-h-[50px]">
               <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} />
             </div>
           </div>

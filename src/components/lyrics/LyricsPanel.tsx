@@ -184,8 +184,6 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
           )
         })}
       </div>
-
-      <p className="mt-3 text-xs text-[#666]">Lyrics powered by LRCLIB when available.</p>
     </div>
   )
 }

@@ -164,7 +164,7 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
         <span className="text-[#666]">source: {source} / {status}</span>
       </div>
 
-      <div className="max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
+      <div className="scrollbar-hide max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
         {lines.map((line, index) => {
           const isActive = index === activeIndex
 

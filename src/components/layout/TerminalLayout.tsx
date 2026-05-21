@@ -22,6 +22,7 @@ import {
   transferPlayback,
 } from '../../features/spotify/spotifyApi'
 import type { SpotifyDevice } from '../../features/spotify/spotifyTypes'
+import { motion } from 'framer-motion'
 import { TerminalPanel } from './TerminalPanel'
 import { TerminalShell } from './TerminalShell'
 import { extractColors } from '../../features/theme/extractColors'
@@ -280,7 +281,7 @@ function TerminalLayoutComponent() {
           <TerminalPanel className="terminal-left min-h-0 overflow-y-auto">
             <PlayerCard />
 
-            <div className="mt-4 border-t border-[#333] pt-3">
+            <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: '0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}>
               <PlayerControls
                 durationMs={durationMs}
                 isPlaying={isPlaying}
@@ -292,7 +293,7 @@ function TerminalLayoutComponent() {
                 progressMs={progressMs}
                 volumePercent={volumePercent}
               />
-              <div className="mt-4 border-t border-[#333] pt-3">
+              <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: '0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}>
                 <label className="mb-1 block text-xs uppercase text-[#999]" htmlFor="player-device">
                   Device
                 </label>
@@ -314,11 +315,26 @@ function TerminalLayoutComponent() {
           </TerminalPanel>
 
           {/* Right column: lyrics on top, visualizer fills remaining space */}
-          <div className="terminal-lyrics flex min-h-0 flex-col border border-[#333] bg-[#1a1a1a]">
-            <header className="border-b border-[#333] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+            className="terminal-lyrics flex min-h-0 flex-col border bg-[#1a1a1a]" 
+            style={{ 
+              borderColor: 'var(--color-dynamic-primary, #00f5ff)',
+              boxShadow: '0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3)), inset 0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))'
+            }}
+          >
+            <header 
+              className="border-b px-4 py-2 text-xs uppercase tracking-wider text-[#999]"
+              style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', textShadow: '0 0 5px var(--color-dynamic-primary, #00f5ff)' }}
+            >
               lyrics
             </header>
-            <div className="h-[60%] p-4 min-h-[150px] overflow-hidden border-b border-[#333]">
+            <div 
+              className="h-[60%] p-4 min-h-[150px] overflow-hidden border-b"
+              style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: 'inset 0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}
+            >
               <LyricsPanel
                 albumName={albumName}
                 artistName={artistName}
@@ -330,7 +346,7 @@ function TerminalLayoutComponent() {
             <div className="flex-1 px-4 py-2 opacity-70 min-h-[50px]">
               <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} />
             </div>
-          </div>
+          </motion.div>
 
           {/* Bottom: queue spanning full width */}
           <TerminalPanel title="queue" className="terminal-queue">

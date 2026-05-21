@@ -181,8 +181,16 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
             <p
               className={
                 isActive
-                  ? 'border-l-2 border-white bg-[#222] px-3 py-1 text-base font-bold text-white terminal-glow-text'
+                  ? 'border-l-2 bg-[#222] px-3 py-1 text-base font-bold text-white terminal-glow-text'
                   : 'border-l-2 border-transparent px-3 py-1 text-[#888]'
+              }
+              style={
+                isActive 
+                  ? { 
+                      borderColor: 'var(--color-dynamic-primary, #00f5ff)',
+                      boxShadow: 'inset 10px 0 10px -10px var(--color-dynamic-glow, rgba(0,245,255,0.3))' 
+                    } 
+                  : {}
               }
               key={`${line.timeMs}-${line.text}`}
               ref={isActive ? activeLineRef : null}

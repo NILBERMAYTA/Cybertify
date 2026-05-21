@@ -5,6 +5,7 @@ import { ProgressTicker } from '../features/player/ProgressTicker'
 import { RouteFallback } from './RouteFallback'
 import { routes } from './routes'
 import { ScanlineOverlay } from '../components/layout/ScanlineOverlay'
+import { AnimatedBackground } from '../components/layout/AnimatedBackground'
 
 function App() {
   const routeElements = useRoutes(routes)
@@ -13,6 +14,7 @@ function App() {
     <>
       <SpotifyWebPlaybackDevice />
       <ProgressTicker />
+      <AnimatedBackground />
       <ScanlineOverlay />
       <Suspense fallback={<RouteFallback />}>{routeElements}</Suspense>
     </>

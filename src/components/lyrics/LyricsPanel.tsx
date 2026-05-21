@@ -77,10 +77,19 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
   )
 
   useEffect(() => {
-    activeLineRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    })
+    const container = containerRef.current
+    const activeLine = activeLineRef.current
+
+    if (container && activeLine) {
+      const containerHeight = container.clientHeight
+      const lineTop = activeLine.offsetTop
+      const lineHeight = activeLine.clientHeight
+
+      container.scrollTo({
+        top: lineTop - containerHeight / 2 + lineHeight / 2,
+        behavior: 'smooth',
+      })
+    }
   }, [activeIndex])
 
   useEffect(() => {
@@ -164,7 +173,7 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
         <span className="text-[#666]">source: {source} / {status}</span>
       </div>
 
-      <div className="scrollbar-hide max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
+      <div className="scrollbar-hide relative max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
         {lines.map((line, index) => {
           const isActive = index === activeIndex
 

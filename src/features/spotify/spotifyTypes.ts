@@ -27,17 +27,9 @@ export type SpotifyTrack = {
 }
 
 export type SpotifyPlaybackState = {
-  device?: SpotifyDevice
   is_playing: boolean
   progress_ms: number | null
   item: SpotifyTrack | null
-}
-
-export type SpotifyCurrentlyPlaying = {
-  is_playing: boolean
-  progress_ms: number | null
-  item: SpotifyTrack | null
-  currently_playing_type: 'track' | 'episode' | 'ad' | 'unknown'
 }
 
 export type SpotifySearchTracksResponse = {
@@ -50,23 +42,6 @@ export type SpotifySearchTracksResponse = {
     previous: string | null
     total: number
   }
-}
-
-export type SpotifyQueue = {
-  currently_playing: SpotifyTrack | null
-  queue: SpotifyTrack[]
-}
-
-export type SpotifyRecommendationsResponse = {
-  tracks: SpotifyTrack[]
-  seeds: Array<{
-    afterFilteringSize: number
-    afterRelinkingSize: number
-    href: string | null
-    id: string
-    initialPoolSize: number
-    type: string
-  }>
 }
 
 export type SpotifyUserProfile = {
@@ -90,19 +65,4 @@ export type SpotifyUserProfile = {
   product?: string
   type: string
   uri: string
-}
-
-export type SpotifyDevice = {
-  id: string | null
-  is_active: boolean
-  is_private_session: boolean
-  is_restricted: boolean
-  name: string
-  type: string
-  volume_percent: number | null
-  supports_volume: boolean
-}
-
-export type SpotifyDevicesResponse = {
-  devices: SpotifyDevice[]
 }

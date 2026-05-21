@@ -12,10 +12,7 @@ export const SPOTIFY_SCOPES = [
   'user-read-playback-state',
   'user-read-currently-playing',
   'user-modify-playback-state',
-  'streaming',
 ] as const
-
-export const SPOTIFY_PREMIUM_REQUIRED_SCOPES = ['streaming'] as const
 
 export type SpotifyAuthConfig = {
   clientId: string

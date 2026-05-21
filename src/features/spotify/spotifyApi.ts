@@ -128,8 +128,9 @@ export function transferPlayback(accessToken: string, deviceId: string, playAfte
 }
 
 export function searchTracks(accessToken: string, query: string, limit = 8, signal?: AbortSignal) {
+  const safeLimit = Math.min(50, Math.max(1, Math.round(limit)))
   const params = new URLSearchParams({
-    limit: String(limit),
+    limit: String(safeLimit),
     q: query,
     type: 'track',
   })
@@ -150,8 +151,9 @@ export function getRecommendations(
     signal?: AbortSignal
   },
 ) {
+  const safeLimit = Math.min(20, Math.max(1, Math.round(options.limit ?? 10)))
   const params = new URLSearchParams({
-    limit: String(options.limit ?? 20),
+    limit: String(safeLimit),
   })
 
   if (options.seedArtistIds?.length) {

@@ -4,16 +4,14 @@ import { paths } from '../../app/paths'
 import { LyricsPanel } from '../lyrics/LyricsPanel'
 import { PlayerCard } from '../player/PlayerCard'
 import { PlayerControls } from '../player/PlayerControls'
+import { QueuePanel } from '../queue/QueuePanel'
 import { AudioVisualizer } from '../visualizer/AudioVisualizer'
 import { spotifyConfig } from '../../app/config'
 import { getValidAccessToken } from '../../features/auth/spotifyAuth'
 import { usePlayerStore } from '../../features/player/playerStore'
 import {
-  addToQueue,
   getAvailableDevices,
   getPlaybackState,
-  getQueue,
-  getRecommendations,
   nextTrack,
   pause,
   play,
@@ -21,10 +19,9 @@ import {
   seekToPosition,
   setVolume,
   SpotifyApiError,
-  searchTracks,
   transferPlayback,
 } from '../../features/spotify/spotifyApi'
-import type { SpotifyDevice, SpotifyTrack } from '../../features/spotify/spotifyTypes'
+import type { SpotifyDevice } from '../../features/spotify/spotifyTypes'
 import { TerminalPanel } from './TerminalPanel'
 import { TerminalShell } from './TerminalShell'
 
@@ -33,7 +30,6 @@ function TerminalLayoutComponent() {
   const deviceId = usePlayerStore((state) => state.deviceId)
   const albumName = usePlayerStore((state) => state.albumName)
   const artistName = usePlayerStore((state) => state.artistName)
-  const currentTrack = usePlayerStore((state) => state.currentTrack)
   const isPlaying = usePlayerStore((state) => state.isPlaying)
   const progressMs = usePlayerStore((state) => state.progressMs)
   const pendingTrackUri = usePlayerStore((state) => state.pendingTrackUri)
@@ -42,13 +38,10 @@ function TerminalLayoutComponent() {
   const setPlaybackState = usePlayerStore((state) => state.setPlaybackState)
   const trackName = usePlayerStore((state) => state.trackName)
   const webPlaybackStatus = usePlayerStore((state) => state.webPlaybackStatus)
-  const [queue, setQueue] = useState<SpotifyTrack[]>([])
-  const [smartQueue, setSmartQueue] = useState<SpotifyTrack[]>([])
   const [devices, setDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
   const [volumePercent, setVolumePercent] = useState(50)
   const [status, setStatus] = useState('sync ready')
-  const [queueStatus, setQueueStatus] = useState('smart queue ready')
 
   const normalizeSpotifyError = useCallback((error: unknown) => {
     if (error instanceof SpotifyApiError && [502, 503, 504].includes(error.status)) {
@@ -103,8 +96,6 @@ function TerminalLayoutComponent() {
       return deviceResponse.devices.find((device) => device.id)?.id ?? ''
     })
 
-    const queueResponse = await getQueue(accessToken, signal).catch(() => null)
-    setQueue(queueResponse?.queue.slice(0, 8) ?? [])
     setStatus(playback?.device?.id ? 'online // sync' : 'select active device')
   }, [normalizeSpotifyError, setPlaybackState])
 
@@ -231,64 +222,6 @@ function TerminalLayoutComponent() {
     [normalizeSpotifyError, refreshPlayback],
   )
 
-  const shuffleTracks = useCallback((tracks: SpotifyTrack[]) => {
-    return [...tracks].sort(() => Math.random() - 0.5)
-  }, [])
-
-  const handleGenerateSmartQueue = useCallback(async () => {
-    const accessToken = await getValidAccessToken(spotifyConfig)
-
-    if (!accessToken) {
-      setQueueStatus('login required')
-      return
-    }
-
-    if (!currentTrack) {
-      setQueueStatus('no current track')
-      return
-    }
-
-    const targetDeviceId = await resolveTargetDevice(accessToken)
-
-    if (!targetDeviceId) {
-      setQueueStatus('select active device first')
-      return
-    }
-
-    setQueueStatus('building similar queue...')
-
-    try {
-      let candidates: SpotifyTrack[] = []
-
-      try {
-        const recommendations = await getRecommendations(accessToken, {
-          limit: 24,
-          seedArtistIds: currentTrack.artists[0]?.id ? [currentTrack.artists[0].id] : undefined,
-          seedTrackIds: [currentTrack.id],
-        })
-        candidates = recommendations.tracks
-      } catch {
-        const fallback = await searchTracks(accessToken, `artist:"${currentTrack.artists[0]?.name ?? artistName}"`, 24)
-        candidates = fallback.tracks.items
-      }
-
-      const randomizedTracks = shuffleTracks(candidates)
-        .filter((track) => track.id !== currentTrack.id)
-        .filter((track, index, allTracks) => allTracks.findIndex((candidate) => candidate.id === track.id) === index)
-        .slice(0, 10)
-
-      for (const track of randomizedTracks) {
-        await addToQueue(accessToken, track.uri, { deviceId: targetDeviceId })
-      }
-
-      setSmartQueue(randomizedTracks)
-      setQueueStatus(`added ${randomizedTracks.length} similar tracks`)
-      await refreshPlayback()
-    } catch (error) {
-      setQueueStatus(normalizeSpotifyError(error))
-    }
-  }, [artistName, currentTrack, normalizeSpotifyError, refreshPlayback, resolveTargetDevice, shuffleTracks])
-
   useEffect(() => {
     if (!pendingTrackUri) {
       return
@@ -302,31 +235,30 @@ function TerminalLayoutComponent() {
 
   return (
     <TerminalShell contentClassName="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-3 py-3">
-        <header className="terminal-frame flex items-center justify-between px-4 py-2 text-xs uppercase tracking-[0.48em] text-cyber-pink">
-          <Link className="hover:text-cyber-cyan" to={paths.home}>
-            * CYBERTIFY *
+        <header className="flex items-center justify-between border border-[#333] bg-[#1a1a1a] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
+          <Link className="hover:text-white" to={paths.home}>
+            CYBERTIFY
           </Link>
-          <nav className="flex items-center gap-4 tracking-[0.22em]">
-            <Link className="text-cyber-muted hover:text-cyber-cyan" to={paths.home}>
+          <nav className="flex items-center gap-4">
+            <Link className="text-[#999] hover:text-white" to={paths.home}>
               home
             </Link>
-            <span className="hidden text-cyber-muted sm:inline">{status}</span>
+            <span className="hidden text-[#666] sm:inline">{status}</span>
           </nav>
         </header>
 
         <section className="terminal-dashboard grid flex-1 gap-3">
-          <aside className="terminal-left grid min-h-0 gap-3">
-            <TerminalPanel title="track">
-              <PlayerCard />
-            </TerminalPanel>
+          {/* Left column: track + controls */}
+          <TerminalPanel className="terminal-left min-h-0 overflow-y-auto">
+            <PlayerCard />
 
-            <TerminalPanel title="controls">
-              <p className="mb-3 text-xs uppercase tracking-[0.12em] text-cyber-muted">{webPlaybackStatus}</p>
-              <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-cyber-muted" htmlFor="player-device">
+            <div className="mt-4 border-t border-[#333] pt-3">
+              <p className="mb-2 text-xs uppercase text-[#666]">{webPlaybackStatus}</p>
+              <label className="mb-1 block text-xs uppercase text-[#999]" htmlFor="player-device">
                 Device
               </label>
               <select
-                className="mb-4 w-full border border-cyber-pink/50 bg-black/60 px-3 py-2 text-xs text-cyber-ice outline-none"
+                className="mb-3 w-full border border-[#444] bg-[#222] px-3 py-2 text-xs text-[#ddd] outline-none"
                 id="player-device"
                 onChange={(event) => void handleDeviceChange(event.target.value)}
                 value={selectedDeviceId}
@@ -349,63 +281,31 @@ function TerminalLayoutComponent() {
                 progressMs={progressMs}
                 volumePercent={volumePercent}
               />
-            </TerminalPanel>
-          </aside>
-
-          <TerminalPanel title="lyrics" className="terminal-lyrics min-h-0">
-            <LyricsPanel
-              albumName={albumName}
-              artistName={artistName}
-              durationMs={durationMs}
-              progressMs={progressMs}
-              trackName={trackName}
-            />
-            <div className="mt-6 border-t border-cyber-pink/30 pt-4">
-              <p className="mb-3 text-xs uppercase tracking-[0.22em] text-cyber-cyan">Queue</p>
-              <div className="mb-3 flex flex-wrap items-center gap-3">
-                <button className="terminal-button terminal-button-primary" onClick={() => void handleGenerateSmartQueue()} type="button">
-                  Smart shuffle
-                </button>
-                <span className="text-xs text-cyber-muted">{queueStatus}</span>
-              </div>
-              <div className="grid gap-2">
-                {queue.length ? (
-                  queue.map((track) => (
-                    <div className="grid grid-cols-[40px_1fr] gap-3 border border-cyber-cyan/15 bg-black/25 p-2" key={`${track.id}-${track.uri}`}>
-                      <img className="h-10 w-10 object-cover" src={track.album.images[0]?.url} alt="" />
-                      <div className="min-w-0 text-xs">
-                        <p className="truncate text-white">{track.name}</p>
-                        <p className="truncate text-cyber-muted">{track.artists.map((artist) => artist.name).join(', ')}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-cyber-muted">Queue unavailable or empty.</p>
-                )}
-              </div>
-              {smartQueue.length ? (
-                <div className="mt-4 border-t border-cyber-cyan/20 pt-4">
-                  <p className="mb-2 text-xs uppercase tracking-[0.22em] text-cyber-cyan">Generated</p>
-                  <div className="grid gap-2">
-                    {smartQueue.map((track) => (
-                      <div className="grid grid-cols-[40px_1fr] gap-3 border border-cyber-pink/15 bg-black/25 p-2" key={`smart-${track.id}`}>
-                        <img className="h-10 w-10 object-cover" src={track.album.images[0]?.url} alt="" />
-                        <div className="min-w-0 text-xs">
-                          <p className="truncate text-white">{track.name}</p>
-                          <p className="truncate text-cyber-muted">{track.artists.map((artist) => artist.name).join(', ')}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           </TerminalPanel>
 
-          <TerminalPanel title="visualizer" className="terminal-bottom">
-            <div className="grid gap-4">
+          {/* Right column: lyrics on top, visualizer fills remaining space */}
+          <div className="terminal-lyrics flex min-h-0 flex-col border border-[#333] bg-[#1a1a1a]">
+            <header className="border-b border-[#333] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
+              lyrics
+            </header>
+            <div className="flex-1 overflow-y-auto p-4">
+              <LyricsPanel
+                albumName={albumName}
+                artistName={artistName}
+                durationMs={durationMs}
+                progressMs={progressMs}
+                trackName={trackName}
+              />
+            </div>
+            <div className="flex min-h-[100px] flex-1 border-t border-[#333]">
               <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} />
             </div>
+          </div>
+
+          {/* Bottom: queue spanning full width */}
+          <TerminalPanel title="queue" className="terminal-queue">
+            <QueuePanel onQueueChanged={refreshPlayback} />
           </TerminalPanel>
         </section>
     </TerminalShell>

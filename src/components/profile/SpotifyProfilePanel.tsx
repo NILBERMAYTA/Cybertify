@@ -81,7 +81,7 @@ function SpotifyProfilePanelComponent() {
 
   if (profileState.status !== 'success') {
     return (
-      <p className={profileState.status === 'error' ? 'font-mono text-sm text-cyber-pink' : 'font-mono text-sm text-cyber-muted'}>
+      <p className={profileState.status === 'error' ? 'text-sm text-red-400' : 'text-sm text-[#999]'}>
         {profileState.message}
       </p>
     )
@@ -92,23 +92,23 @@ function SpotifyProfilePanelComponent() {
 
   return (
     <div className="grid gap-4 md:grid-cols-[96px_1fr]">
-      <div className="h-24 w-24 overflow-hidden border border-cyber-cyan/35 bg-cyber-panel">
+      <div className="h-24 w-24 overflow-hidden border border-[#333] bg-[#1a1a1a]">
         {avatar ? <img className="h-full w-full object-cover" src={avatar.url} alt={profile.display_name ?? profile.id} /> : null}
       </div>
-      <div className="font-mono text-sm text-cyber-muted">
-        <p className="mb-2 uppercase tracking-[0.22em] text-cyber-cyan">Login correcto</p>
-        <h1 className="mb-3 text-2xl font-black uppercase text-white">{profile.display_name ?? profile.id}</h1>
+      <div className="text-sm text-[#999]">
+        <p className="mb-2 uppercase tracking-wider text-green-400">Login correcto</p>
+        <h1 className="mb-3 text-2xl font-bold uppercase text-white">{profile.display_name ?? profile.id}</h1>
         <p>User ID: {profile.id}</p>
         <p>Email: {profile.email ?? 'Not available'}</p>
         <p>Spotify URI: {profile.uri}</p>
         <div className="mt-3 flex flex-wrap gap-3">
-          <Link className="text-cyber-cyan underline" to={paths.player}>
+          <Link className="text-blue-400 underline" to={paths.player}>
             Open Cybertify player
           </Link>
-          <a className="text-cyber-cyan underline" href={profile.external_urls.spotify} target="_blank" rel="noreferrer">
+          <a className="text-blue-400 underline" href={profile.external_urls.spotify} target="_blank" rel="noreferrer">
             Open Spotify profile
           </a>
-          <button className="text-cyber-pink underline" type="button" onClick={handleLogout}>
+          <button className="text-red-400 underline" type="button" onClick={handleLogout}>
             Logout
           </button>
         </div>

@@ -18,9 +18,9 @@ function ProgressBarComponent({ progressMs = 0, durationMs = 1, onSeek }: Progre
   const progress = Math.min(100, Math.max(0, (progressMs / durationMs) * 100))
 
   return (
-    <div className="space-y-2 font-mono text-xs text-cyber-muted">
+    <div className="space-y-1 text-xs text-[#999]">
       <button
-        className="h-3 w-full border border-cyber-cyan/30 bg-black text-left"
+        className="h-3 w-full border border-[#444] bg-[#222] text-left"
         onClick={(event) => {
           const bounds = event.currentTarget.getBoundingClientRect()
           const ratio = (event.clientX - bounds.left) / bounds.width
@@ -28,7 +28,7 @@ function ProgressBarComponent({ progressMs = 0, durationMs = 1, onSeek }: Progre
         }}
         type="button"
       >
-        <div className="h-full bg-cyber-cyan shadow-[0_0_18px_rgba(0,245,255,0.65)]" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-[#888]" style={{ width: `${progress}%` }} />
       </button>
       <div className="flex justify-between">
         <span>{formatMs(progressMs)}</span>

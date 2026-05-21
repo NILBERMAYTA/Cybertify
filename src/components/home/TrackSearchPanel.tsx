@@ -76,23 +76,23 @@ function TrackSearchPanelComponent() {
 
   return (
     <div className="space-y-4">
-      <label className="block text-xs uppercase tracking-[0.22em] text-cyber-muted" htmlFor="track-search">
+      <label className="block text-xs uppercase text-[#999]" htmlFor="track-search">
         Song search
       </label>
       <input
-        className="w-full border border-cyber-pink/50 bg-black/45 px-3 py-3 font-mono text-sm text-cyber-ice outline-none focus:border-cyber-cyan"
+        className="w-full border border-[#444] bg-[#222] px-3 py-3 text-sm text-[#ddd] outline-none focus:border-[#888]"
         id="track-search"
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search track, artist, album..."
         type="search"
         value={query}
       />
-      <p className="font-mono text-xs text-cyber-muted">{status}</p>
-      <p className="font-mono text-xs text-cyber-muted">Device: {deviceId ? 'Cybertify ready' : webPlaybackStatus}</p>
+      <p className="text-xs text-[#999]">{status}</p>
+      <p className="text-xs text-[#666]">Device: {deviceId ? 'Cybertify ready' : webPlaybackStatus}</p>
       <div className="grid gap-2">
         {results.map((track) => (
           <button
-            className="grid grid-cols-[48px_1fr_auto] items-center gap-3 border border-cyber-cyan/20 bg-black/35 p-2 text-left hover:border-cyber-cyan"
+            className="grid grid-cols-[48px_1fr_auto] items-center gap-3 border border-[#333] bg-[#1a1a1a] p-2 text-left hover:border-[#666]"
             key={track.id}
             onClick={() => void handlePlayTrack(track)}
             type="button"
@@ -100,9 +100,9 @@ function TrackSearchPanelComponent() {
             <img className="h-12 w-12 object-cover" src={track.album.images[0]?.url} alt="" />
             <span className="min-w-0">
               <span className="block truncate text-sm text-white">{track.name}</span>
-              <span className="block truncate text-xs text-cyber-muted">{track.artists.map((artist) => artist.name).join(', ')}</span>
+              <span className="block truncate text-xs text-[#999]">{track.artists.map((artist) => artist.name).join(', ')}</span>
             </span>
-            <span className="text-xs uppercase text-cyber-pink">Play</span>
+            <span className="text-xs uppercase text-[#999]">Play</span>
           </button>
         ))}
       </div>

@@ -1,5 +1,4 @@
 import { memo, useEffect, useRef } from 'react'
-import { useThemeStore } from '../../features/theme/themeStore'
 
 type AudioVisualizerProps = {
   isPlaying?: boolean
@@ -7,7 +6,7 @@ type AudioVisualizerProps = {
 }
 
 const BAR_COUNT = 48
-const IDLE_LEVEL = 0.18
+const IDLE_LEVEL = 0.06
 
 function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -15,10 +14,6 @@ function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVi
   const levelsRef = useRef(Array.from({ length: BAR_COUNT }, () => IDLE_LEVEL))
   const isPlayingRef = useRef(isPlaying)
   const progressMsRef = useRef(progressMs)
-  const primaryColor = useThemeStore((state) => state.primaryColor)
-  const secondaryColor = useThemeStore((state) => state.secondaryColor)
-  const backgroundColor = useThemeStore((state) => state.backgroundColor)
-  const glowColor = useThemeStore((state) => state.glowColor)
 
   useEffect(() => {
     isPlayingRef.current = isPlaying
@@ -26,85 +21,73 @@ function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVi
   }, [isPlaying, progressMs])
 
   useEffect(() => {
-    const canvasElement = canvasRef.current
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-    if (!canvasElement) {
-      return
-    }
-
-    const canvasContext = canvasElement.getContext('2d')
-
-    if (!canvasContext) {
-      return
-    }
-
-    const canvas = canvasElement
-    const context = canvasContext
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
     function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect()
-      const pixelRatio = window.devicePixelRatio || 1
-      canvas.width = Math.max(1, Math.floor(rect.width * pixelRatio))
-      canvas.height = Math.max(1, Math.floor(rect.height * pixelRatio))
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      const rect = canvas!.getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
+      canvas!.width = Math.max(1, Math.floor(rect.width * dpr))
+      canvas!.height = Math.max(1, Math.floor(rect.height * dpr))
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
-    const resizeObserver = new ResizeObserver(resizeCanvas)
-    resizeObserver.observe(canvas)
+    const observer = new ResizeObserver(resizeCanvas)
+    observer.observe(canvas)
     resizeCanvas()
 
     function draw(time: number) {
-      const width = canvas.clientWidth
-      const height = canvas.clientHeight
-      const gap = 4
-      const barWidth = Math.max(3, (width - gap * (BAR_COUNT - 1)) / BAR_COUNT)
+      const w = canvas!.clientWidth
+      const h = canvas!.clientHeight
+      const gap = 3
+      const barW = Math.max(2, (w - gap * (BAR_COUNT - 1)) / BAR_COUNT)
       const levels = levelsRef.current
 
-      context.clearRect(0, 0, width, height)
-      context.fillStyle = backgroundColor
-      context.globalAlpha = 0.32
-      context.fillRect(0, 0, width, height)
-      context.globalAlpha = 1
+      ctx!.clearRect(0, 0, w, h)
 
-      const gradient = context.createLinearGradient(0, height, 0, 0)
-      gradient.addColorStop(0, primaryColor)
-      gradient.addColorStop(1, secondaryColor)
-      context.fillStyle = gradient
-      context.shadowColor = glowColor
-      context.shadowBlur = 16
+      for (let i = 0; i < BAR_COUNT; i++) {
+        // Generate pseudo-random but deterministic bar heights from sin waves
+        const wave1 = Math.sin(time * 0.003 + i * 0.6 + progressMsRef.current * 0.0008)
+        const wave2 = Math.sin(time * 0.005 + i * 0.35)
+        const wave3 = Math.sin(time * 0.002 + i * 1.1 + progressMsRef.current * 0.0012)
+        const bass = i < BAR_COUNT * 0.3 ? 0.15 : 0
+        const target = isPlayingRef.current
+          ? 0.15 + Math.abs(wave1 * 0.35) + Math.abs(wave2 * 0.25) + Math.abs(wave3 * 0.15) + bass
+          : IDLE_LEVEL
 
-      for (let index = 0; index < BAR_COUNT; index += 1) {
-        const wave = Math.sin(time * 0.004 + index * 0.55 + progressMsRef.current * 0.001)
-        const pulse = Math.sin(time * 0.0025 + index * 0.21)
-        const target = isPlayingRef.current ? 0.22 + Math.abs(wave * 0.48) + Math.abs(pulse * 0.22) : IDLE_LEVEL
-        levels[index] += (Math.min(0.95, target) - levels[index]) * 0.12
+        // Smooth interpolation toward target
+        levels[i] += (Math.min(0.95, target) - levels[i]) * 0.1
 
-        const barHeight = Math.max(6, levels[index] * (height - 18))
-        const x = index * (barWidth + gap)
-        const y = height - barHeight
+        const barH = Math.max(2, levels[i] * (h - 4))
+        const x = i * (barW + gap)
+        const y = h - barH
 
-        context.fillRect(x, y, barWidth, barHeight)
+        // Color gradient per bar: white at top fading to gray at bottom
+        const brightness = Math.floor(140 + levels[i] * 115)
+        ctx!.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`
+        ctx!.fillRect(x, y, barW, barH)
       }
 
-      context.shadowBlur = 0
-      frameRef.current = window.requestAnimationFrame(draw)
+      frameRef.current = requestAnimationFrame(draw)
     }
 
-    frameRef.current = window.requestAnimationFrame(draw)
+    frameRef.current = requestAnimationFrame(draw)
 
     return () => {
-      resizeObserver.disconnect()
-
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current)
-      }
+      observer.disconnect()
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
     }
-  }, [backgroundColor, glowColor, primaryColor, secondaryColor])
+  }, [])
 
   return (
-    <div className="h-48 border border-cyber-pink/25 bg-cyber-panel/60 p-3">
-      <canvas className="h-full w-full" ref={canvasRef} aria-label="Audio visualizer" />
-    </div>
+    <canvas
+      className="block h-full w-full"
+      ref={canvasRef}
+      aria-label="Audio visualizer"
+    />
   )
 }
 

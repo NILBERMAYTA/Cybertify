@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { memo } from 'react'
-import { NeonBorder } from './NeonBorder'
 
 type TerminalPanelProps = {
   title?: string
@@ -10,16 +9,14 @@ type TerminalPanelProps = {
 
 function TerminalPanelComponent({ title, children, className = '' }: TerminalPanelProps) {
   return (
-    <NeonBorder className={className}>
-      <section className="terminal-panel bg-black/45">
-        {title ? (
-          <header className="border-b border-cyber-cyan/20 px-4 py-3 font-mono text-xs uppercase tracking-[0.22em] text-cyber-cyan">
-            {title}
-          </header>
-        ) : null}
-        <div className="p-4">{children}</div>
-      </section>
-    </NeonBorder>
+    <section className={`border border-[#333] bg-[#1a1a1a] ${className}`}>
+      {title ? (
+        <header className="border-b border-[#333] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
+          {title}
+        </header>
+      ) : null}
+      <div className="p-4">{children}</div>
+    </section>
   )
 }
 

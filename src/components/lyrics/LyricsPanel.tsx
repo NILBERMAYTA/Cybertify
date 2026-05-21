@@ -16,16 +16,7 @@ type LyricLine = {
 }
 
 const mockLyrics: LyricLine[] = [
-  { timeMs: 0, text: 'CYBERTIFY TERMINAL ONLINE' },
-  { timeMs: 5000, text: 'Signal locked on neon static' },
-  { timeMs: 10000, text: 'Bassline moving through the grid' },
-  { timeMs: 15000, text: 'Portals flash in violet rhythm' },
-  { timeMs: 20000, text: 'Every pulse becomes a command' },
-  { timeMs: 26000, text: 'Synthetic hearts keep time' },
-  { timeMs: 32000, text: 'Chrome reflections over midnight' },
-  { timeMs: 38000, text: 'Playback status: alive' },
-  { timeMs: 44000, text: 'Awaiting lyrics source module' },
-  { timeMs: 50000, text: 'LRC parser ready for sync' },
+  { timeMs: 0, text: 'Waiting for track...' },
 ]
 
 function parseTimestamp(timestamp: string) {
@@ -167,13 +158,13 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
   }, [albumName, artistName, durationMs, trackName])
 
   return (
-    <div className="font-mono text-sm">
-      <div className="mb-4 flex items-center justify-between border-b border-cyber-pink/30 pb-3 text-xs uppercase tracking-[0.18em]">
-        <span className="text-cyber-cyan">LYRICS_STREAM: {trackName ? 'sync' : 'idle'}</span>
-        <span className="text-cyber-muted">source: {source} / {status}</span>
+    <div className="text-sm">
+      <div className="mb-3 flex items-center justify-between border-b border-[#333] pb-2 text-xs uppercase">
+        <span className="text-[#999]">LYRICS: {trackName ? 'sync' : 'idle'}</span>
+        <span className="text-[#666]">source: {source} / {status}</span>
       </div>
 
-      <div className="max-h-[48vh] space-y-2 overflow-y-auto pr-2 text-cyber-muted" ref={containerRef}>
+      <div className="max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
         {lines.map((line, index) => {
           const isActive = index === activeIndex
 
@@ -181,20 +172,20 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
             <p
               className={
                 isActive
-                  ? 'border-l-2 border-cyber-pink bg-cyber-pink/10 px-3 py-2 text-base font-bold text-white shadow-[0_0_18px_rgba(255,46,214,0.22)]'
-                  : 'border-l-2 border-transparent px-3 py-1 text-cyber-muted'
+                  ? 'border-l-2 border-white bg-[#222] px-3 py-1 text-base font-bold text-white'
+                  : 'border-l-2 border-transparent px-3 py-1 text-[#888]'
               }
               key={`${line.timeMs}-${line.text}`}
               ref={isActive ? activeLineRef : null}
             >
-              <span className="mr-3 text-xs text-cyber-cyan">[{Math.floor(line.timeMs / 1000).toString().padStart(3, '0')}]</span>
+              <span className="mr-2 text-xs text-[#666]">[{Math.floor(line.timeMs / 1000).toString().padStart(3, '0')}]</span>
               {line.text}
             </p>
           )
         })}
       </div>
 
-      <p className="mt-4 text-xs text-cyber-pink">Lyrics powered by LRCLIB when available.</p>
+      <p className="mt-3 text-xs text-[#666]">Lyrics powered by LRCLIB when available.</p>
     </div>
   )
 }

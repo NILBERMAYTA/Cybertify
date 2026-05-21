@@ -21,6 +21,7 @@ type PlayerState = {
   setPendingTrackUri: (trackUri: string | null) => void
   setPlaybackState: (playback: SpotifyPlaybackState | null) => void
   setWebPlaybackStatus: (status: string) => void
+  tickProgress: (deltaMs: number) => void
 }
 
 function getTrackMetadata(track: SpotifyTrack | null) {
@@ -72,4 +73,14 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       }
     }),
   setWebPlaybackStatus: (webPlaybackStatus) => set({ webPlaybackStatus }),
+  tickProgress: (deltaMs) =>
+    set((state) => {
+      if (!state.isPlaying || !state.currentTrack) {
+        return state
+      }
+
+      return {
+        progressMs: Math.min(state.durationMs, state.progressMs + deltaMs),
+      }
+    }),
 }))

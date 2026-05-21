@@ -54,15 +54,15 @@ function NowPlayingSummaryComponent() {
   const track = playback?.item
 
   if (!track) {
-    return <p className="font-mono text-sm text-cyber-muted">{status}</p>
+    return <p className="text-sm text-[#999]">{status}</p>
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-[96px_1fr]">
-      <img className="h-24 w-24 border border-cyber-pink/50 object-cover" src={track.album.images[0]?.url} alt="" />
-      <div className="font-mono text-sm text-cyber-muted">
-        <p className="mb-2 uppercase tracking-[0.22em] text-cyber-cyan">{playback.is_playing ? 'Playing now' : 'Paused'}</p>
-        <h2 className="text-2xl font-black uppercase text-white">{track.name}</h2>
+      <img className="h-24 w-24 border border-[#333] object-cover" src={track.album.images[0]?.url} alt="" />
+      <div className="text-sm text-[#999]">
+        <p className="mb-2 uppercase tracking-wider text-white">{playback.is_playing ? 'Playing now' : 'Paused'}</p>
+        <h2 className="text-2xl font-bold uppercase text-white">{track.name}</h2>
         <p>{track.artists.map((artist) => artist.name).join(', ')}</p>
         <p>Album: {track.album.name}</p>
         <p>

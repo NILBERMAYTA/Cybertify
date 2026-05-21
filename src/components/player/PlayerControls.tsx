@@ -40,11 +40,11 @@ function PlayerControlsComponent({
 
       <ProgressBar progressMs={progressMs} durationMs={durationMs || 1} onSeek={onSeek} />
 
-      <label className="block text-xs uppercase tracking-[0.18em] text-cyber-muted" htmlFor="player-volume">
+      <label className="block text-xs uppercase text-[#999]" htmlFor="player-volume">
         Volume {volumePercent}%
       </label>
       <input
-        className="w-full accent-cyber-pink"
+        className="w-full"
         id="player-volume"
         max="100"
         min="0"

@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react'
+import { memo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { spotifyConfig } from '../app/config'
 import { paths } from '../app/paths'
@@ -10,15 +10,11 @@ import { SpotifyProfilePanel } from '../components/profile/SpotifyProfilePanel'
 import { getValidAccessToken } from '../features/auth/spotifyAuth'
 import { usePlayerStore } from '../features/player/playerStore'
 import { getCurrentlyPlaying } from '../features/spotify/spotifyApi'
-import { useThemeStore } from '../features/theme/themeStore'
 
 function HomePageComponent() {
-  const lastAlbumImageRef = useRef('')
-
   useEffect(() => {
     const controller = new AbortController()
     const setCurrentlyPlaying = usePlayerStore.getState().setCurrentlyPlaying
-    const setThemeFromAlbum = useThemeStore.getState().setThemeFromAlbum
 
     async function syncCurrentlyPlaying() {
       const accessToken = await getValidAccessToken(spotifyConfig)
@@ -30,13 +26,6 @@ function HomePageComponent() {
       try {
         const currentlyPlaying = await getCurrentlyPlaying(accessToken, controller.signal)
         setCurrentlyPlaying(currentlyPlaying)
-
-        const albumImage = currentlyPlaying?.item?.album.images[0]?.url ?? ''
-
-        if (albumImage && albumImage !== lastAlbumImageRef.current) {
-          lastAlbumImageRef.current = albumImage
-          await setThemeFromAlbum(albumImage)
-        }
       } catch {
         // Polling should be non-blocking for the home view.
       }
@@ -53,9 +42,9 @@ function HomePageComponent() {
 
   return (
     <TerminalShell contentClassName="mx-auto grid w-full max-w-6xl content-center gap-4 px-4 py-12">
-      <header className="terminal-frame flex items-center justify-between px-4 py-2 text-xs uppercase tracking-[0.28em] text-cyber-pink">
-        <span>* CYBERTIFY *</span>
-        <Link className="text-cyber-muted hover:text-cyber-cyan" to={paths.player}>
+      <header className="flex items-center justify-between border border-[#333] bg-[#1a1a1a] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
+        <span>CYBERTIFY</span>
+        <Link className="text-[#999] hover:text-white" to={paths.player}>
           player
         </Link>
       </header>

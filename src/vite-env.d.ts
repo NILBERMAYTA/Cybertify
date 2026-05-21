@@ -24,6 +24,10 @@ type SpotifyWebPlaybackPlayer = {
 }
 
 interface Window {
+  __CYBERTIFY_ENV__?: {
+    VITE_SPOTIFY_CLIENT_ID?: string
+    VITE_SPOTIFY_REDIRECT_URI?: string
+  }
   onSpotifyWebPlaybackSDKReady?: () => void
   Spotify?: {
     Player: new (options: {

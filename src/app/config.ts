@@ -1,7 +1,11 @@
 import { SPOTIFY_SCOPES } from '../features/auth/spotifyAuth'
 
+function getRuntimeEnvValue(key: 'VITE_SPOTIFY_CLIENT_ID' | 'VITE_SPOTIFY_REDIRECT_URI') {
+  return window.__CYBERTIFY_ENV__?.[key] || import.meta.env[key]
+}
+
 function getRedirectUri() {
-  const envRedirectUri = import.meta.env.VITE_SPOTIFY_REDIRECT_URI
+  const envRedirectUri = getRuntimeEnvValue('VITE_SPOTIFY_REDIRECT_URI')
   const runtimeRedirectUri = `${window.location.origin}/callback`
 
   if (
@@ -16,7 +20,7 @@ function getRedirectUri() {
 }
 
 export const spotifyConfig = {
-  clientId: import.meta.env.VITE_SPOTIFY_CLIENT_ID,
+  clientId: getRuntimeEnvValue('VITE_SPOTIFY_CLIENT_ID'),
   redirectUri: getRedirectUri(),
   scopes: SPOTIFY_SCOPES,
 }

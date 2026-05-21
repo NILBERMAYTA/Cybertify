@@ -6,7 +6,7 @@ import {
   addToQueue,
   getAvailableDevices,
   getQueue,
-  getRecommendations,
+  play,
   searchTracks,
   SpotifyApiError,
 } from '../../features/spotify/spotifyApi'
@@ -26,9 +26,11 @@ function normalizeQueueError(error: unknown) {
 
 function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
   const artistName = usePlayerStore((state) => state.artistName)
+  const activeDeviceId = usePlayerStore((state) => state.activeDeviceId)
   const currentTrack = usePlayerStore((state) => state.currentTrack)
   const deviceId = usePlayerStore((state) => state.deviceId)
   const setDeviceId = usePlayerStore((state) => state.setDeviceId)
+  const webPlaybackDeviceId = usePlayerStore((state) => state.webPlaybackDeviceId)
   const [queue, setQueue] = useState<SpotifyTrack[]>([])
   const [smartQueue, setSmartQueue] = useState<SpotifyTrack[]>([])
   const [status, setStatus] = useState('smart queue ready')
@@ -51,7 +53,9 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
     const deviceResponse = await getAvailableDevices(accessToken).catch(() => ({ devices: [] }))
     const availableDeviceIds = new Set(deviceResponse.devices.map((device) => device.id).filter(Boolean))
     const targetDeviceId =
+      (webPlaybackDeviceId && availableDeviceIds.has(webPlaybackDeviceId) ? webPlaybackDeviceId : null) ??
       (deviceId && availableDeviceIds.has(deviceId) ? deviceId : null) ??
+      (activeDeviceId && availableDeviceIds.has(activeDeviceId) ? activeDeviceId : null) ??
       deviceResponse.devices.find((device) => device.id)?.id ??
       null
 
@@ -60,11 +64,42 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
     }
 
     return targetDeviceId
-  }, [deviceId, setDeviceId])
+  }, [activeDeviceId, deviceId, setDeviceId, webPlaybackDeviceId])
 
-  const shuffleTracks = useCallback((tracks: SpotifyTrack[]) => {
-    return [...tracks].sort(() => Math.random() - 0.5)
+  const shuffleItems = useCallback(<T,>(items: T[]) => {
+    const shuffled = [...items]
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1))
+      ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]]
+    }
+
+    return shuffled
   }, [])
+
+  const getRandomQueueCandidates = useCallback(
+    async (accessToken: string) => {
+      const primaryArtist = currentTrack?.artists[0]?.name ?? artistName
+      const secondaryArtist = currentTrack?.artists[1]?.name
+      const trackKeyword = currentTrack?.name.split(/\s+/).find((word) => word.length > 3)
+      const randomYear = 1980 + Math.floor(Math.random() * 47)
+      const randomLetter = 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)]
+      const queries = shuffleItems(
+        [
+          primaryArtist ? `artist:"${primaryArtist}"` : '',
+          secondaryArtist ? `artist:"${secondaryArtist}"` : '',
+          trackKeyword ? `${trackKeyword} year:${randomYear}` : '',
+          `${randomLetter} year:${randomYear}`,
+          `tag:new ${randomLetter}`,
+        ].filter(Boolean),
+      ).slice(0, 3)
+
+      const responses = await Promise.allSettled(queries.map((query) => searchTracks(accessToken, query, 50)))
+
+      return responses.flatMap((response) => (response.status === 'fulfilled' ? response.value.tracks.items : []))
+    },
+    [artistName, currentTrack, shuffleItems],
+  )
 
   const generateSmartQueue = useCallback(async () => {
     if (autoQueueInFlightRef.current) {
@@ -94,21 +129,9 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
         return
       }
 
-      let candidates: SpotifyTrack[] = []
+      const candidates = await getRandomQueueCandidates(accessToken)
 
-      try {
-        const recommendations = await getRecommendations(accessToken, {
-          limit: 10,
-          seedArtistIds: currentTrack.artists[0]?.id ? [currentTrack.artists[0].id] : undefined,
-          seedTrackIds: [currentTrack.id],
-        })
-        candidates = recommendations.tracks
-      } catch {
-        const fallback = await searchTracks(accessToken, `artist:"${currentTrack.artists[0]?.name ?? artistName}"`, 24)
-        candidates = fallback.tracks.items
-      }
-
-      const randomizedTracks = shuffleTracks(candidates)
+      const randomizedTracks = shuffleItems(candidates)
         .filter((track) => track.id !== currentTrack.id)
         .filter((track, index, allTracks) => allTracks.findIndex((candidate) => candidate.id === track.id) === index)
         .slice(0, 10)
@@ -118,7 +141,7 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
       }
 
       setSmartQueue(randomizedTracks)
-      setStatus(`added ${randomizedTracks.length} similar tracks`)
+      setStatus(`added ${randomizedTracks.length} random tracks`)
       lastAutoQueuedTrackRef.current = currentTrack.id
       await refreshQueue()
       await onQueueChanged?.()
@@ -127,7 +150,35 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
     } finally {
       autoQueueInFlightRef.current = false
     }
-  }, [artistName, currentTrack, onQueueChanged, refreshQueue, resolveTargetDevice, shuffleTracks])
+  }, [currentTrack, getRandomQueueCandidates, onQueueChanged, refreshQueue, resolveTargetDevice, shuffleItems])
+
+  const handlePlayTrack = useCallback(
+    async (track: SpotifyTrack) => {
+      const accessToken = await getValidAccessToken(spotifyConfig)
+
+      if (!accessToken) {
+        setStatus('login required')
+        return
+      }
+
+      try {
+        const targetDeviceId = await resolveTargetDevice(accessToken)
+
+        if (!targetDeviceId) {
+          setStatus('select active device first')
+          return
+        }
+
+        await play(accessToken, { deviceId: targetDeviceId, uris: [track.uri] })
+        setStatus(`playing ${track.name}`)
+        await refreshQueue()
+        await onQueueChanged?.()
+      } catch (error) {
+        setStatus(normalizeQueueError(error))
+      }
+    },
+    [onQueueChanged, refreshQueue, resolveTargetDevice],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -152,17 +203,23 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
   return (
     <div className="mt-4 border-t border-[#333] pt-3">
       <p className="mb-2 text-xs uppercase text-[#999]">Queue</p>
-      <p className="mb-3 text-xs text-[#666]">Auto smart shuffle: {status}</p>
+      <p className="mb-3 text-xs text-[#666]">Auto random queue: {status}</p>
       <div className="grid gap-2">
         {queue.length ? (
           queue.map((track) => (
-            <div className="grid grid-cols-[40px_1fr] gap-3 border border-[#333] bg-[#1a1a1a] p-2" key={`${track.id}-${track.uri}`}>
+            <button
+              className="grid grid-cols-[40px_1fr_auto] items-center gap-3 border border-[#333] bg-[#1a1a1a] p-2 text-left hover:border-[#666] focus:border-[#888] focus:outline-none"
+              key={`${track.id}-${track.uri}`}
+              onClick={() => void handlePlayTrack(track)}
+              type="button"
+            >
               <img className="h-10 w-10 object-cover" src={track.album.images[0]?.url} alt="" />
               <div className="min-w-0 text-xs">
                 <p className="truncate text-white">{track.name}</p>
                 <p className="truncate text-[#999]">{track.artists.map((artist) => artist.name).join(', ')}</p>
               </div>
-            </div>
+              <span className="text-xs uppercase text-[#999]">Play</span>
+            </button>
           ))
         ) : (
           <p className="text-sm text-[#666]">Queue unavailable or empty.</p>
@@ -173,13 +230,19 @@ function QueuePanelComponent({ onQueueChanged }: QueuePanelProps) {
           <p className="mb-2 text-xs uppercase text-[#999]">Generated</p>
           <div className="grid gap-2">
             {smartQueue.map((track) => (
-              <div className="grid grid-cols-[40px_1fr] gap-3 border border-[#333] bg-[#1a1a1a] p-2" key={`smart-${track.id}`}>
+              <button
+                className="grid grid-cols-[40px_1fr_auto] items-center gap-3 border border-[#333] bg-[#1a1a1a] p-2 text-left hover:border-[#666] focus:border-[#888] focus:outline-none"
+                key={`smart-${track.id}`}
+                onClick={() => void handlePlayTrack(track)}
+                type="button"
+              >
                 <img className="h-10 w-10 object-cover" src={track.album.images[0]?.url} alt="" />
                 <div className="min-w-0 text-xs">
                   <p className="truncate text-white">{track.name}</p>
                   <p className="truncate text-[#999]">{track.artists.map((artist) => artist.name).join(', ')}</p>
                 </div>
-              </div>
+                <span className="text-xs uppercase text-[#999]">Play</span>
+              </button>
             ))}
           </div>
         </div>

@@ -39,6 +39,7 @@ function loadSpotifyPlaybackSdk() {
 
 function SpotifyWebPlaybackDeviceComponent() {
   const setDeviceId = usePlayerStore((state) => state.setDeviceId)
+  const setWebPlaybackDeviceId = usePlayerStore((state) => state.setWebPlaybackDeviceId)
   const setWebPlaybackStatus = usePlayerStore((state) => state.setWebPlaybackStatus)
 
   useEffect(() => {
@@ -79,6 +80,7 @@ function SpotifyWebPlaybackDeviceComponent() {
       player.addListener('ready', (event) => {
         const readyEvent = event as SpotifyWebPlaybackReadyEvent
         setDeviceId(readyEvent.device_id)
+        setWebPlaybackDeviceId(readyEvent.device_id)
         setWebPlaybackStatus('web device ready')
       })
 
@@ -101,9 +103,10 @@ function SpotifyWebPlaybackDeviceComponent() {
 
     return () => {
       disposed = true
+      setWebPlaybackDeviceId(null)
       player?.disconnect()
     }
-  }, [setDeviceId, setWebPlaybackStatus])
+  }, [setDeviceId, setWebPlaybackDeviceId, setWebPlaybackStatus])
 
   return null
 }

@@ -29,7 +29,9 @@ import { extractColors } from '../../features/theme/extractColors'
 
 function TerminalLayoutComponent() {
   const durationMs = usePlayerStore((state) => state.durationMs)
+  const activeDeviceId = usePlayerStore((state) => state.activeDeviceId)
   const deviceId = usePlayerStore((state) => state.deviceId)
+  const webPlaybackDeviceId = usePlayerStore((state) => state.webPlaybackDeviceId)
   const albumName = usePlayerStore((state) => state.albumName)
   const artistName = usePlayerStore((state) => state.artistName)
   const isPlaying = usePlayerStore((state) => state.isPlaying)
@@ -114,29 +116,35 @@ function TerminalLayoutComponent() {
     const availableDeviceIds = new Set(deviceResponse.devices.map((device) => device.id).filter(Boolean))
     setDevices(deviceResponse.devices)
     setSelectedDeviceId((currentDeviceId) => {
-      if (playback?.device?.id && availableDeviceIds.has(playback.device.id)) {
-        return playback.device.id
-      }
-
       if (currentDeviceId && availableDeviceIds.has(currentDeviceId)) {
         return currentDeviceId
+      }
+
+      if (webPlaybackDeviceId && availableDeviceIds.has(webPlaybackDeviceId)) {
+        return webPlaybackDeviceId
+      }
+
+      if (playback?.device?.id && availableDeviceIds.has(playback.device.id)) {
+        return playback.device.id
       }
 
       return deviceResponse.devices.find((device) => device.id)?.id ?? ''
     })
 
     setStatus(playback?.device?.id ? 'online // sync' : 'select active device')
-  }, [normalizeSpotifyError, setPlaybackState])
+  }, [normalizeSpotifyError, setPlaybackState, webPlaybackDeviceId])
 
   const resolveTargetDevice = useCallback(
     async (accessToken: string) => {
       const deviceResponse = await getAvailableDevices(accessToken).catch(() => ({ devices: [] }))
       const availableDeviceIds = new Set(deviceResponse.devices.map((device) => device.id).filter(Boolean))
+      const firstAvailableDeviceId = deviceResponse.devices.find((device) => device.id)?.id ?? null
       const nextDeviceId =
-        (deviceId && availableDeviceIds.has(deviceId) ? deviceId : null) ??
         (selectedDeviceId && availableDeviceIds.has(selectedDeviceId) ? selectedDeviceId : null) ??
-        deviceResponse.devices.find((device) => device.id)?.id ??
-        null
+        (webPlaybackDeviceId && availableDeviceIds.has(webPlaybackDeviceId) ? webPlaybackDeviceId : null) ??
+        (deviceId && availableDeviceIds.has(deviceId) ? deviceId : null) ??
+        (activeDeviceId && availableDeviceIds.has(activeDeviceId) ? activeDeviceId : null) ??
+        firstAvailableDeviceId
 
       setDevices(deviceResponse.devices)
       setSelectedDeviceId(nextDeviceId ?? '')
@@ -147,7 +155,7 @@ function TerminalLayoutComponent() {
 
       return nextDeviceId
     },
-    [deviceId, selectedDeviceId, setDeviceId],
+    [activeDeviceId, deviceId, selectedDeviceId, setDeviceId, webPlaybackDeviceId],
   )
 
   useEffect(() => {
@@ -180,7 +188,7 @@ function TerminalLayoutComponent() {
       }
 
       try {
-        if (!deviceId) {
+        if (targetDeviceId !== activeDeviceId) {
           await transferPlayback(accessToken, targetDeviceId, false)
         }
 
@@ -199,7 +207,7 @@ function TerminalLayoutComponent() {
         setStatus(message.includes('No active device') ? 'No active device. Select a device or open Spotify.' : message)
       }
     },
-    [deviceId, normalizeSpotifyError, refreshPlayback, resolveTargetDevice, selectedDeviceId, setDeviceId],
+    [activeDeviceId, normalizeSpotifyError, refreshPlayback, resolveTargetDevice, setDeviceId],
   )
 
   const handlePlayPause = useCallback(() => {

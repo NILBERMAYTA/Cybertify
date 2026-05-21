@@ -65,10 +65,11 @@ function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVi
         const x = i * (barW + gap)
         const y = h - barH
 
-        // Color gradient per bar: white at top fading to gray at bottom
-        const brightness = Math.floor(140 + levels[i] * 115)
-        ctx!.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`
+        const baseColor = document.documentElement.style.getPropertyValue('--color-dynamic-primary') || '#00f5ff'
+        ctx!.fillStyle = baseColor
+        ctx!.globalAlpha = Math.min(1, 0.3 + levels[i] * 0.7)
         ctx!.fillRect(x, y, barW, barH)
+        ctx!.globalAlpha = 1
       }
 
       frameRef.current = requestAnimationFrame(draw)

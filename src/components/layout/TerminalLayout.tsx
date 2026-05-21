@@ -24,6 +24,7 @@ import {
 import type { SpotifyDevice } from '../../features/spotify/spotifyTypes'
 import { TerminalPanel } from './TerminalPanel'
 import { TerminalShell } from './TerminalShell'
+import { extractColors } from '../../features/theme/extractColors'
 
 function TerminalLayoutComponent() {
   const durationMs = usePlayerStore((state) => state.durationMs)
@@ -37,10 +38,38 @@ function TerminalLayoutComponent() {
   const setPendingTrackUri = usePlayerStore((state) => state.setPendingTrackUri)
   const setPlaybackState = usePlayerStore((state) => state.setPlaybackState)
   const trackName = usePlayerStore((state) => state.trackName)
+  const albumImage = usePlayerStore((state) => state.albumImage)
   const [devices, setDevices] = useState<SpotifyDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('')
   const [volumePercent, setVolumePercent] = useState(50)
   const [status, setStatus] = useState('sync ready')
+
+  useEffect(() => {
+    if (!albumImage) {
+      document.documentElement.style.setProperty('--color-dynamic-primary', '#00f5ff')
+      document.documentElement.style.setProperty('--color-dynamic-glow', 'rgba(0, 245, 255, 0.3)')
+      return
+    }
+
+    let active = true
+    extractColors(albumImage)
+      .then((colors) => {
+        if (active) {
+          document.documentElement.style.setProperty('--color-dynamic-primary', colors.primaryColor)
+          document.documentElement.style.setProperty('--color-dynamic-glow', colors.glowColor)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          document.documentElement.style.setProperty('--color-dynamic-primary', '#00f5ff')
+          document.documentElement.style.setProperty('--color-dynamic-glow', 'rgba(0, 245, 255, 0.3)')
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [albumImage])
 
   const normalizeSpotifyError = useCallback((error: unknown) => {
     if (error instanceof SpotifyApiError && [502, 503, 504].includes(error.status)) {

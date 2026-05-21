@@ -28,7 +28,14 @@ function ProgressBarComponent({ progressMs = 0, durationMs = 1, onSeek }: Progre
         }}
         type="button"
       >
-        <div className="h-full bg-[#888]" style={{ width: `${progress}%` }} />
+        <div
+          className="h-full"
+          style={{
+            backgroundColor: 'var(--color-dynamic-primary, #00f5ff)',
+            boxShadow: '0 0 5px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))',
+            width: `${progress}%`,
+          }}
+        />
       </button>
       <div className="flex justify-between">
         <span>{formatMs(progressMs)}</span>

@@ -181,7 +181,7 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
             <p
               className={
                 isActive
-                  ? 'border-l-2 border-white bg-[#222] px-3 py-1 text-base font-bold text-white'
+                  ? 'border-l-2 border-white bg-[#222] px-3 py-1 text-base font-bold text-white terminal-glow-text'
                   : 'border-l-2 border-transparent px-3 py-1 text-[#888]'
               }
               key={`${line.timeMs}-${line.text}`}

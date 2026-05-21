@@ -4,7 +4,7 @@
 @theme {
   --color-cyber-night: #05070f;
   --color-cyber-panel: #0b1020;
-  --color-cyber-cyan: #00f5ff;
+  --color-cyber-cyan: var(--color-dynamic-primary, #00f5ff);
   --color-cyber-pink: #ff2ed6;
   --color-cyber-ice: #e9fbff;
   --color-cyber-muted: #8da8b7;

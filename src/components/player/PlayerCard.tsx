@@ -11,10 +11,13 @@ function PlayerCardComponent() {
 
   return (
     <article className="space-y-4">
-      <AlbumCover imageUrl={albumImage} title={trackName || 'Track artwork'} />
+      <AlbumCover imageUrl={albumImage} title={trackName || 'Track artwork'} isPlaying={isPlaying} />
       <div className="space-y-1 text-xs uppercase tracking-wider">
         <p className="text-[#999]">Title</p>
-        <h2 className="terminal-glow-text break-words text-xl font-bold text-white">
+        <h2 
+          className="terminal-glow-text break-words text-xl font-bold text-white"
+          style={{ textShadow: '0 2px 8px rgba(255,255,255,0.2)' }}
+        >
           {trackName || 'NO SIGNAL'}
         </h2>
         <p className="text-[#999]">Artist</p>

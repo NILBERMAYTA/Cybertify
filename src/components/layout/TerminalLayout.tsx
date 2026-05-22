@@ -20,7 +20,7 @@ import { TerminalShell } from './TerminalShell'
 import { extractColors } from '../../features/theme/extractColors'
 import { initWebPlayer, disconnectWebPlayer } from '../../features/player/webPlaybackSdk'
 
-const POLL_INTERVAL_MS = 5000
+const POLL_INTERVAL_MS = 1000
 
 function formatMs(ms: number) {
   const totalSeconds = Math.floor(ms / 1000)
@@ -138,87 +138,87 @@ function TerminalLayoutComponent() {
 
   return (
     <TerminalShell contentClassName="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-3 py-3">
-        <header className="flex flex-wrap items-start justify-between gap-3 border border-[#333] bg-[#1a1a1a] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
-          <Link className="shrink-0 py-2 hover:text-white" to={paths.home}>
-            CYBERTIFY
+      <header className="flex flex-wrap items-start justify-between gap-3 border border-[#333] bg-[#1a1a1a] px-4 py-2 text-xs uppercase tracking-wider text-[#999]">
+        <Link className="shrink-0 py-2 hover:text-white" to={paths.home}>
+          CYBERTIFY
+        </Link>
+        <TrackSearchPanel onTrackPlayed={() => void pollPlayback()} />
+        <nav className="flex shrink-0 items-center gap-4 py-2">
+          <Link className="text-[#999] hover:text-white" to={paths.home}>
+            home
           </Link>
-          <TrackSearchPanel onTrackPlayed={() => void pollPlayback()} />
-          <nav className="flex shrink-0 items-center gap-4 py-2">
-            <Link className="text-[#999] hover:text-white" to={paths.home}>
-              home
-            </Link>
-            <span className="hidden text-[#666] sm:inline">{status}</span>
-          </nav>
-        </header>
+          <span className="hidden text-[#666] sm:inline">{status}</span>
+        </nav>
+      </header>
 
-        <section className="terminal-dashboard grid flex-1 gap-3">
-          {/* Left column: track info + read-only progress */}
-          <TerminalPanel className="terminal-left min-h-0 overflow-y-auto">
-            <PlayerCard />
+      <section className="terminal-dashboard grid flex-1 gap-3">
+        {/* Left column: track info + read-only progress */}
+        <TerminalPanel className="terminal-left min-h-0 overflow-y-auto">
+          <PlayerCard />
 
-            <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: '0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}>
-              {/* Read-only progress bar */}
-              <div className="space-y-1 text-xs text-[#999]">
-                <div className="h-3 w-full border border-[#444] bg-[#222]">
-                  <div
-                    className="h-full transition-all duration-500 ease-linear"
-                    style={{
-                      backgroundColor: 'var(--color-dynamic-primary, #00f5ff)',
-                      boxShadow: '0 0 5px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))',
-                      width: `${progress}%`,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between">
-                  <span>{formatMs(progressMs)}</span>
-                  <span>{formatMs(durationMs)}</span>
-                </div>
+          <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: '0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}>
+            {/* Read-only progress bar */}
+            <div className="space-y-1 text-xs text-[#999]">
+              <div className="h-3 w-full border border-[#444] bg-[#222]">
+                <div
+                  className="h-full"
+                  style={{
+                    backgroundColor: 'var(--color-dynamic-primary, #00f5ff)',
+                    boxShadow: '0 0 5px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))',
+                    width: `${Math.min(100, Math.max(0, (Math.floor(progressMs / 1000) / Math.floor((durationMs || 1) / 1000)) * 100))}%`,
+                  }}
+                />
               </div>
-
-              <div className="mt-4">
-                <PlaybackControls onAction={() => void pollPlayback()} />
-              </div>
-
-              <div className="mt-3">
-                <DeviceSelector onTransfer={() => void pollPlayback()} />
+              <div className="flex justify-between">
+                <span>{formatMs(Math.floor(progressMs / 1000) * 1000)}</span>
+                <span>{formatMs(durationMs)}</span>
               </div>
             </div>
-          </TerminalPanel>
 
-          {/* Right column: lyrics on top, visualizer fills remaining space */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-            className="terminal-lyrics flex min-h-0 flex-col border bg-[#1a1a1a]" 
-            style={{ 
-              borderColor: 'var(--color-dynamic-primary, #00f5ff)',
-              boxShadow: '0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3)), inset 0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))'
-            }}
+            <div className="mt-4">
+              <PlaybackControls onAction={() => void pollPlayback()} />
+            </div>
+
+            <div className="mt-3">
+              <DeviceSelector onTransfer={() => void pollPlayback()} />
+            </div>
+          </div>
+        </TerminalPanel>
+
+        {/* Right column: lyrics on top, visualizer fills remaining space */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+          className="terminal-lyrics flex min-h-0 flex-col border bg-[#1a1a1a]"
+          style={{
+            borderColor: 'var(--color-dynamic-primary, #00f5ff)',
+            boxShadow: '0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3)), inset 0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))'
+          }}
+        >
+          <header
+            className="border-b px-4 py-2 text-xs uppercase tracking-wider text-[#999]"
+            style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', textShadow: '0 0 5px var(--color-dynamic-primary, #00f5ff)' }}
           >
-            <header 
-              className="border-b px-4 py-2 text-xs uppercase tracking-wider text-[#999]"
-              style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', textShadow: '0 0 5px var(--color-dynamic-primary, #00f5ff)' }}
-            >
-              lyrics
-            </header>
-            <div 
-              className="h-[60%] p-4 min-h-[150px] overflow-hidden border-b"
-              style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: 'inset 0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}
-            >
-              <LyricsPanel
-                albumName={albumName}
-                artistName={artistName}
-                durationMs={durationMs}
-                progressMs={progressMs}
-                trackName={trackName}
-              />
-            </div>
-            <div className="flex-1 px-4 py-2 opacity-70 min-h-[50px]">
-              <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} />
-            </div>
-          </motion.div>
-        </section>
+            lyrics
+          </header>
+          <div
+            className="h-[60%] p-4 min-h-[150px] overflow-hidden border-b"
+            style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: 'inset 0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}
+          >
+            <LyricsPanel
+              albumName={albumName}
+              artistName={artistName}
+              durationMs={durationMs}
+              progressMs={progressMs}
+              trackName={trackName}
+            />
+          </div>
+          <div className="flex-1 px-4 py-2 opacity-70 min-h-[50px]">
+            <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} />
+          </div>
+        </motion.div>
+      </section>
     </TerminalShell>
   )
 }

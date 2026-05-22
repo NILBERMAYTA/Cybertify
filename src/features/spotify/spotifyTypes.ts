@@ -32,12 +32,7 @@ export type SpotifyPlaybackState = {
   item: SpotifyTrack | null
   shuffle_state?: boolean
   repeat_state?: 'off' | 'context' | 'track'
-  device?: {
-    id: string | null
-    is_active: boolean
-    name: string
-    volume_percent: number | null
-  }
+  device?: SpotifyDevice
 }
 
 export type SpotifySearchTracksResponse = {

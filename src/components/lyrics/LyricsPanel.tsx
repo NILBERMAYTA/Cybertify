@@ -176,22 +176,35 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
       <div className="scrollbar-hide relative max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
         {lines.map((line, index) => {
           const isActive = index === activeIndex
+          const isPrev = index === activeIndex - 1
+          const isNext = index === activeIndex + 1
+
+          let className = 'border-l-2 border-transparent px-3 py-1 text-[#888] transition-all duration-300'
+          let style: React.CSSProperties = {}
+
+          if (isActive) {
+            className = 'border-l-2 px-3 py-2 text-lg font-bold transition-all duration-300'
+            style = { 
+              color: 'var(--color-dynamic-primary, #00f5ff)',
+              borderColor: 'var(--color-dynamic-primary, #00f5ff)',
+              background: 'linear-gradient(90deg, var(--color-dynamic-glow, rgba(0,245,255,0.15)) 0%, transparent 100%)',
+              textShadow: 'none',
+              transform: 'scale(1.02) translateX(2px)',
+              transformOrigin: 'left center'
+            }
+          } else if (isPrev || isNext) {
+            className = 'border-l-2 border-transparent px-3 py-1 transition-all duration-300'
+            style = {
+              color: 'var(--color-dynamic-primary, #00f5ff)',
+              opacity: 0.85,
+              textShadow: 'none'
+            }
+          }
 
           return (
             <p
-              className={
-                isActive
-                  ? 'border-l-2 bg-[#222] px-3 py-1 text-base font-bold text-white terminal-glow-text'
-                  : 'border-l-2 border-transparent px-3 py-1 text-[#888]'
-              }
-              style={
-                isActive 
-                  ? { 
-                      borderColor: 'var(--color-dynamic-primary, #00f5ff)',
-                      boxShadow: 'inset 10px 0 10px -10px var(--color-dynamic-glow, rgba(0,245,255,0.3))' 
-                    } 
-                  : {}
-              }
+              className={className}
+              style={style}
               key={`${line.timeMs}-${line.text}`}
               ref={isActive ? activeLineRef : null}
             >

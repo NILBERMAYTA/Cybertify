@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { spotifyConfig } from '../../app/config'
 import { getValidAccessToken } from '../../features/auth/spotifyAuth'
+import { usePlayerStore } from '../../features/player/playerStore'
 import {
   getAvailableDevices,
   transferPlayback,
@@ -121,7 +122,10 @@ function DeviceSelectorComponent({ onTransfer }: DeviceSelectorProps) {
   const [error, setError] = useState('')
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 
-  const activeDevice = devices.find((d) => d.is_active) ?? null
+  const activeStoreDevice = usePlayerStore((state) => state.activeDevice)
+  
+  // Prefer the freshly fetched active device from the dropdown, but default to the store's auto-polled active device
+  const activeDevice = devices.find((d) => d.is_active) ?? activeStoreDevice
 
   // Close on click outside
   useEffect(() => {

@@ -156,3 +156,35 @@ export function disconnectWebPlayer() {
     updateState({ player: null, deviceId: null, ready: false, error: null })
   }
 }
+
+/**
+ * Initializes the web player if needed and waits for it to become ready,
+ * returning the device ID.
+ */
+export function ensureWebPlayerReady(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (state.ready && state.deviceId) {
+      resolve(state.deviceId)
+      return
+    }
+
+    if (state.error) {
+      reject(new Error(state.error))
+      return
+    }
+
+    const unsubscribe = subscribeWebPlayer((newState) => {
+      if (newState.ready && newState.deviceId) {
+        unsubscribe()
+        resolve(newState.deviceId)
+      } else if (newState.error) {
+        unsubscribe()
+        reject(new Error(newState.error))
+      }
+    })
+
+    if (!state.player) {
+      void initWebPlayer()
+    }
+  })
+}

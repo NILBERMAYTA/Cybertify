@@ -185,10 +185,10 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
           if (isActive) {
             className = 'border-l-2 px-3 py-2 text-lg font-bold transition-all duration-300'
             style = { 
-              color: 'var(--color-dynamic-primary, #00f5ff)',
+              color: '#ffffff',
               borderColor: 'var(--color-dynamic-primary, #00f5ff)',
               background: 'linear-gradient(90deg, var(--color-dynamic-glow, rgba(0,245,255,0.15)) 0%, transparent 100%)',
-              textShadow: 'none',
+              textShadow: '0 0 12px rgba(255, 255, 255, 0.9), 0 0 25px rgba(255, 255, 255, 0.5)',
               transform: 'scale(1.02) translateX(2px)',
               transformOrigin: 'left center'
             }

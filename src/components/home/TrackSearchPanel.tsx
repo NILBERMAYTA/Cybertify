@@ -1,9 +1,9 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { spotifyConfig } from '../../app/config'
 import { getValidAccessToken } from '../../features/auth/spotifyAuth'
-import { play, searchTracks, SpotifyApiError } from '../../features/spotify/spotifyApi'
+import { getAvailableDevices, play, searchTracks, SpotifyApiError } from '../../features/spotify/spotifyApi'
 import type { SpotifyTrack } from '../../features/spotify/spotifyTypes'
-import { getWebPlayerDeviceId } from '../../features/player/webPlaybackSdk'
+import { ensureWebPlayerReady } from '../../features/player/webPlaybackSdk'
 
 const DEBOUNCE_MS = 400
 const MIN_QUERY_LENGTH = 3
@@ -161,21 +161,32 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
     setResults([])
 
     try {
-      await play(accessToken, { uris: [track.uri] })
+      const devicesRes = await getAvailableDevices(accessToken)
+      const activeDevice = devicesRes.devices.find(d => d.is_active)
+      
+      if (!activeDevice && devicesRes.devices.length === 0) {
+        // No active devices, initialize web player lazily
+        setStatus('Initializing web player...')
+        const webDeviceId = await ensureWebPlayerReady()
+        await play(accessToken, { uris: [track.uri], deviceId: webDeviceId })
+      } else {
+        // Try playing normally, Spotify will use the active device or fallback to an available one
+        await play(accessToken, { uris: [track.uri] })
+      }
+
       setStatus(`▶ ${track.name}`)
       onTrackPlayed?.()
     } catch (error) {
       if (error instanceof SpotifyApiError && error.status === 404 && error.message.toLowerCase().includes('device')) {
-        const webDeviceId = getWebPlayerDeviceId()
-        if (webDeviceId) {
-          try {
-            await play(accessToken, { uris: [track.uri], deviceId: webDeviceId })
-            setStatus(`▶ ${track.name}`)
-            onTrackPlayed?.()
-            return
-          } catch (retryError) {
-            error = retryError
-          }
+        setStatus('Initializing web player...')
+        try {
+          const webDeviceId = await ensureWebPlayerReady()
+          await play(accessToken, { uris: [track.uri], deviceId: webDeviceId })
+          setStatus(`▶ ${track.name}`)
+          onTrackPlayed?.()
+          return
+        } catch (retryError) {
+          error = retryError
         }
       }
 
@@ -193,7 +204,12 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
   return (
     <div ref={wrapperRef} className="relative flex min-w-0 flex-1 sm:min-w-[320px]">
       <input
-        className="w-full border border-[#444] bg-[#222] px-3 py-2 text-xs normal-case text-[#ddd] outline-none placeholder:text-[#666] focus:border-[#888]"
+        className="w-full border bg-[#222] px-3 py-2 text-xs normal-case outline-none transition-all duration-300 placeholder:opacity-50"
+        style={{
+          borderColor: isOpen || query ? 'var(--color-dynamic-primary, #444)' : '#444',
+          color: 'var(--color-dynamic-primary, #ddd)',
+          boxShadow: isOpen || query ? '0 0 8px var(--color-dynamic-glow, transparent)' : 'none'
+        }}
         aria-label="Search Spotify tracks"
         onChange={(event) => setQuery(event.target.value)}
         onFocus={() => {

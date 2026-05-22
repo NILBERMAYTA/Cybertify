@@ -14,9 +14,11 @@ function PlayerCardComponent() {
       <AlbumCover imageUrl={albumImage} title={trackName || 'Track artwork'} isPlaying={isPlaying} />
       <div className="space-y-1 text-xs uppercase tracking-wider">
         <p className="text-[#999]">Title</p>
-        <h2 
-          className="terminal-glow-text break-words text-xl font-bold text-white"
-          style={{ textShadow: '0 2px 8px rgba(255,255,255,0.2)' }}
+        <h2
+          className="break-words text-xl font-bold text-white"
+          style={{ 
+            textShadow: '0 0 4px #ffffff, 0 0 15px var(--color-dynamic-primary, #00f5ff), 0 0 30px var(--color-dynamic-primary, #00f5ff)' 
+          }}
         >
           {trackName || 'NO SIGNAL'}
         </h2>

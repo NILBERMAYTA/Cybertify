@@ -89,6 +89,12 @@ async function spotifyFetch<T>(path: string, accessToken: string, options: Spoti
     return undefined as T
   }
 
+  const contentType = response.headers.get('content-type')
+  if (!contentType || !contentType.includes('application/json')) {
+    // Some successful Spotify endpoints return non-JSON text (e.g. routing tokens or empty bodies)
+    return undefined as T
+  }
+
   try {
     return JSON.parse(text) as T
   } catch (err) {

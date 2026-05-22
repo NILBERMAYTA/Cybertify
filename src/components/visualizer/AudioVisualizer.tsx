@@ -3,15 +3,17 @@ import { memo, useEffect, useRef } from 'react'
 type AudioVisualizerProps = {
   isPlaying?: boolean
   progressMs?: number
+  albumImage?: string
 }
 
 const BAR_COUNT = 48
 const IDLE_LEVEL = 0.06
 
-function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVisualizerProps) {
+function AudioVisualizerComponent({ isPlaying = false, progressMs = 0, albumImage = '' }: AudioVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const frameRef = useRef<number | null>(null)
   const levelsRef = useRef(Array.from({ length: BAR_COUNT }, () => IDLE_LEVEL))
+  const paletteRef = useRef<string[]>(Array.from({ length: BAR_COUNT }, () => ''))
   const isPlayingRef = useRef(isPlaying)
   const progressMsRef = useRef(progressMs)
 
@@ -19,6 +21,47 @@ function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVi
     isPlayingRef.current = isPlaying
     progressMsRef.current = progressMs
   }, [isPlaying, progressMs])
+
+  useEffect(() => {
+    if (!albumImage) {
+      paletteRef.current = Array.from({ length: BAR_COUNT }, () => '')
+      return
+    }
+
+    const img = new Image()
+    img.crossOrigin = 'Anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = BAR_COUNT
+      canvas.height = 1
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return
+
+      ctx.drawImage(img, 0, 0, BAR_COUNT, 1)
+      const data = ctx.getImageData(0, 0, BAR_COUNT, 1).data
+      const newPalette: string[] = []
+
+      for (let i = 0; i < BAR_COUNT; i++) {
+        const r = data[i * 4]
+        const g = data[i * 4 + 1]
+        const b = data[i * 4 + 2]
+        
+        // Boost brightness if colors are too dark
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000
+        let pr = r, pg = g, pb = b
+        if (brightness < 40) {
+          pr = Math.min(255, r + 50)
+          pg = Math.min(255, g + 50)
+          pb = Math.min(255, b + 50)
+        }
+        
+        newPalette.push(`rgb(${pr}, ${pg}, ${pb})`)
+      }
+      
+      paletteRef.current = newPalette
+    }
+    img.src = albumImage
+  }, [albumImage])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -65,8 +108,9 @@ function AudioVisualizerComponent({ isPlaying = false, progressMs = 0 }: AudioVi
         const x = i * (barW + gap)
         const y = h - barH
 
-        const baseColor = document.documentElement.style.getPropertyValue('--color-dynamic-primary') || '#00f5ff'
-        ctx!.fillStyle = baseColor
+        const fallbackColor = document.documentElement.style.getPropertyValue('--color-dynamic-primary') || '#00f5ff'
+        const barColor = paletteRef.current[i] || fallbackColor
+        ctx!.fillStyle = barColor
         ctx!.globalAlpha = Math.min(1, 0.3 + levels[i] * 0.7)
         ctx!.fillRect(x, y, barW, barH)
         ctx!.globalAlpha = 1

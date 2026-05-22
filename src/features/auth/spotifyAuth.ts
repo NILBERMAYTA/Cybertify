@@ -15,8 +15,6 @@ export const SPOTIFY_SCOPES = [
   'streaming',
 ] as const
 
-export const SPOTIFY_PREMIUM_REQUIRED_SCOPES = ['streaming'] as const
-
 export type SpotifyAuthConfig = {
   clientId: string
   redirectUri: string

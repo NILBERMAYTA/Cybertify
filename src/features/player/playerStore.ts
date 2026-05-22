@@ -1,7 +1,5 @@
 import { create } from 'zustand'
-import type { SpotifyCurrentlyPlaying } from '../spotify/spotifyTypes'
-import type { SpotifyPlaybackState } from '../spotify/spotifyTypes'
-import type { SpotifyTrack } from '../spotify/spotifyTypes'
+import type { SpotifyPlaybackState, SpotifyTrack, SpotifyDevice } from '../spotify/spotifyTypes'
 
 type PlayerState = {
   currentTrack: SpotifyTrack | null
@@ -12,20 +10,16 @@ type PlayerState = {
   albumName: string
   artistName: string
   trackName: string
-  activeDeviceId: string | null
-  deviceId: string | null
-  webPlaybackDeviceId: string | null
-  pendingTrackUri: string | null
-  webPlaybackStatus: string
+  shuffleState: boolean
+  repeatState: 'off' | 'context' | 'track'
+  volumePercent: number
+  activeDevice: SpotifyDevice | null
   setCurrentTrack: (track: SpotifyTrack | null) => void
-  setCurrentlyPlaying: (currentlyPlaying: SpotifyCurrentlyPlaying | null) => void
-  setActiveDeviceId: (deviceId: string | null) => void
-  setDeviceId: (deviceId: string | null) => void
-  setPendingTrackUri: (trackUri: string | null) => void
   setPlaybackState: (playback: SpotifyPlaybackState | null) => void
-  setWebPlaybackDeviceId: (deviceId: string | null) => void
-  setWebPlaybackStatus: (status: string) => void
   tickProgress: (deltaMs: number) => void
+  setShuffleState: (shuffle: boolean) => void
+  setRepeatState: (repeat: 'off' | 'context' | 'track') => void
+  setVolumePercent: (volume: number) => void
 }
 
 function getTrackMetadata(track: SpotifyTrack | null) {
@@ -46,37 +40,50 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   albumImage: '',
   albumName: '',
   artistName: '',
-  activeDeviceId: null,
   trackName: '',
-  deviceId: null,
-  webPlaybackDeviceId: null,
-  pendingTrackUri: null,
-  webPlaybackStatus: 'web playback idle',
+  shuffleState: false,
+  repeatState: 'off',
+  volumePercent: 100,
+  activeDevice: null,
   setCurrentTrack: (track) =>
     set({
       currentTrack: track,
       ...getTrackMetadata(track),
     }),
-  setCurrentlyPlaying: (currentlyPlaying) =>
-    set({
-      currentTrack: currentlyPlaying?.item ?? null,
-      isPlaying: currentlyPlaying?.is_playing ?? false,
-      progressMs: currentlyPlaying?.progress_ms ?? 0,
-      ...getTrackMetadata(currentlyPlaying?.item ?? null),
-    }),
-  setActiveDeviceId: (activeDeviceId) => set({ activeDeviceId }),
-  setDeviceId: (deviceId) => set({ deviceId }),
-  setPendingTrackUri: (pendingTrackUri) => set({ pendingTrackUri }),
   setPlaybackState: (playback) =>
-    set({
-      activeDeviceId: playback?.device?.id ?? null,
-      currentTrack: playback?.item ?? null,
-      isPlaying: playback?.is_playing ?? false,
-      progressMs: playback?.progress_ms ?? 0,
-      ...getTrackMetadata(playback?.item ?? null),
+    set((state) => {
+      const isSameTrack = state.currentTrack?.id === playback?.item?.id
+      const serverProgress = playback?.progress_ms ?? 0
+
+      // If we are playing the same track and the server progress is very close
+      // to our local progress (e.g. within 3 seconds), we ignore the server's
+      // value to prevent the progress bar and lyrics from jumping back and forth
+      // due to network latency.
+      let nextProgress = serverProgress
+      if (isSameTrack && playback?.is_playing) {
+        // If the server says we are slightly behind our local ticker (due to network latency),
+        // we keep our local ticker to prevent backward jitter.
+        // However, if the server says we are AHEAD (or significantly behind), we snap to server to fix desync.
+        const diff = serverProgress - state.progressMs
+        if (diff < 0 && diff > -1500) {
+          nextProgress = state.progressMs
+        } else {
+          // Add a small 200ms assumed network latency forward compensation
+          nextProgress = serverProgress + 200
+        }
+      }
+
+      return {
+        currentTrack: playback?.item ?? null,
+        isPlaying: playback?.is_playing ?? false,
+        progressMs: nextProgress,
+        shuffleState: playback?.shuffle_state ?? false,
+        repeatState: playback?.repeat_state ?? 'off',
+        volumePercent: playback?.device?.volume_percent ?? 100,
+        activeDevice: playback?.device ?? null,
+        ...getTrackMetadata(playback?.item ?? null),
+      }
     }),
-  setWebPlaybackDeviceId: (webPlaybackDeviceId) => set({ webPlaybackDeviceId }),
-  setWebPlaybackStatus: (webPlaybackStatus) => set({ webPlaybackStatus }),
   tickProgress: (deltaMs) =>
     set((state) => {
       if (!state.isPlaying || !state.currentTrack) {
@@ -87,4 +94,8 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         progressMs: Math.min(state.durationMs, state.progressMs + deltaMs),
       }
     }),
+  setShuffleState: (shuffle) => set({ shuffleState: shuffle }),
+  setRepeatState: (repeat) => set({ repeatState: repeat }),
+  setVolumePercent: (volume) => set({ volumePercent: volume }),
 }))
+

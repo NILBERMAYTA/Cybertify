@@ -215,7 +215,7 @@ function TerminalLayoutComponent() {
             />
           </div>
           <div className="flex-1 px-4 py-2 opacity-70 min-h-[50px]">
-            <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} />
+            <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} albumImage={usePlayerStore((state) => state.albumImage)} />
           </div>
         </motion.div>
       </section>

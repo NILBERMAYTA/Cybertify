@@ -1,4 +1,5 @@
 import type {
+  SpotifyDevicesResponse,
   SpotifyPlaybackState,
   SpotifySearchTracksResponse,
   SpotifyUserProfile,
@@ -9,7 +10,7 @@ const RETRYABLE_STATUS_CODES = new Set([502, 503, 504])
 
 type SpotifyRequestOptions = {
   body?: unknown
-  method?: 'GET' | 'POST' | 'PUT'
+  method?: 'DELETE' | 'GET' | 'POST' | 'PUT'
   signal?: AbortSignal
 }
 
@@ -83,7 +84,19 @@ async function spotifyFetch<T>(path: string, accessToken: string, options: Spoti
     return undefined as T
   }
 
-  return response.json() as Promise<T>
+  const text = await response.text().catch(() => '')
+  if (!text) {
+    return undefined as T
+  }
+
+  try {
+    return JSON.parse(text) as T
+  } catch (err) {
+    throw new SpotifyApiError(
+      `Invalid JSON response: ${text.slice(0, 100)}...`,
+      response.status,
+    )
+  }
 }
 
 export function getCurrentUser(accessToken: string, signal?: AbortSignal) {
@@ -108,16 +121,79 @@ export function searchTracks(accessToken: string, query: string, limit = 8, sign
   return spotifyFetch<SpotifySearchTracksResponse>(`/search?${params.toString()}`, accessToken, { signal })
 }
 
-export function play(accessToken: string, options: { uris?: string[]; signal?: AbortSignal } = {}) {
+export function play(accessToken: string, options: { uris?: string[]; deviceId?: string; signal?: AbortSignal } = {}) {
   const body = options.uris ? { uris: options.uris } : undefined
+  const query = options.deviceId ? `?device_id=${options.deviceId}` : ''
 
-  return spotifyFetch<void>('/me/player/play', accessToken, {
+  return spotifyFetch<void>(`/me/player/play${query}`, accessToken, {
     body,
     method: 'PUT',
     signal: options.signal,
   })
 }
 
+export function pause(accessToken: string, signal?: AbortSignal) {
+  return spotifyFetch<void>('/me/player/pause', accessToken, {
+    method: 'PUT',
+    signal,
+  })
+}
+
+export function skipToNext(accessToken: string, signal?: AbortSignal) {
+  return spotifyFetch<void>('/me/player/next', accessToken, {
+    method: 'POST',
+    signal,
+  })
+}
+
+export function skipToPrevious(accessToken: string, signal?: AbortSignal) {
+  return spotifyFetch<void>('/me/player/previous', accessToken, {
+    method: 'POST',
+    signal,
+  })
+}
+
+export function seekToPosition(accessToken: string, positionMs: number, signal?: AbortSignal) {
+  return spotifyFetch<void>(`/me/player/seek?position_ms=${Math.round(positionMs)}`, accessToken, {
+    method: 'PUT',
+    signal,
+  })
+}
+
+export function setVolume(accessToken: string, volumePercent: number, signal?: AbortSignal) {
+  const safeVolume = Math.min(100, Math.max(0, Math.round(volumePercent)))
+
+  return spotifyFetch<void>(`/me/player/volume?volume_percent=${safeVolume}`, accessToken, {
+    method: 'PUT',
+    signal,
+  })
+}
+
+export function setShuffle(accessToken: string, state: boolean, signal?: AbortSignal) {
+  return spotifyFetch<void>(`/me/player/shuffle?state=${state}`, accessToken, {
+    method: 'PUT',
+    signal,
+  })
+}
+
+export function setRepeat(accessToken: string, state: 'off' | 'context' | 'track', signal?: AbortSignal) {
+  return spotifyFetch<void>(`/me/player/repeat?state=${state}`, accessToken, {
+    method: 'PUT',
+    signal,
+  })
+}
+
+export function getAvailableDevices(accessToken: string, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyDevicesResponse>('/me/player/devices', accessToken, { signal })
+}
+
+export function transferPlayback(accessToken: string, deviceId: string, startPlaying = true, signal?: AbortSignal) {
+  return spotifyFetch<void>('/me/player', accessToken, {
+    body: { device_ids: [deviceId], play: startPlaying },
+    method: 'PUT',
+    signal,
+  })
+}
+
 export const fetchProfile = getCurrentUser
 export const getCurrentPlayback = getPlaybackState
-

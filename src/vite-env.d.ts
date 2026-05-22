@@ -8,28 +8,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
-
-type SpotifyWebPlaybackError = {
-  message: string
-}
-
-type SpotifyWebPlaybackReadyEvent = {
-  device_id: string
-}
-
-type SpotifyWebPlaybackPlayer = {
-  addListener: (event: string, callback: (event: SpotifyWebPlaybackError | SpotifyWebPlaybackReadyEvent) => void) => void
-  connect: () => Promise<boolean>
-  disconnect: () => void
-}
-
-interface Window {
-  onSpotifyWebPlaybackSDKReady?: () => void
-  Spotify?: {
-    Player: new (options: {
-      getOAuthToken: (callback: (token: string) => void) => void
-      name: string
-      volume?: number
-    }) => SpotifyWebPlaybackPlayer
-  }
-}

@@ -30,6 +30,14 @@ export type SpotifyPlaybackState = {
   is_playing: boolean
   progress_ms: number | null
   item: SpotifyTrack | null
+  shuffle_state?: boolean
+  repeat_state?: 'off' | 'context' | 'track'
+  device?: {
+    id: string | null
+    is_active: boolean
+    name: string
+    volume_percent: number | null
+  }
 }
 
 export type SpotifySearchTracksResponse = {
@@ -66,3 +74,19 @@ export type SpotifyUserProfile = {
   type: string
   uri: string
 }
+
+export type SpotifyDevice = {
+  id: string | null
+  is_active: boolean
+  is_private_session: boolean
+  is_restricted: boolean
+  name: string
+  type: string
+  volume_percent: number | null
+  supports_volume: boolean
+}
+
+export type SpotifyDevicesResponse = {
+  devices: SpotifyDevice[]
+}
+

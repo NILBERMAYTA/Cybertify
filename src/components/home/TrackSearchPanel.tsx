@@ -1,8 +1,12 @@
-import { memo, useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { spotifyConfig } from '../../app/config'
 import { getValidAccessToken } from '../../features/auth/spotifyAuth'
 import { play, searchTracks, SpotifyApiError } from '../../features/spotify/spotifyApi'
 import type { SpotifyTrack } from '../../features/spotify/spotifyTypes'
+import { getWebPlayerDeviceId } from '../../features/player/webPlaybackSdk'
+
+const DEBOUNCE_MS = 400
+const MIN_QUERY_LENGTH = 3
 
 type TrackSearchPanelProps = {
   onTrackPlayed?: () => void
@@ -15,19 +19,26 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
   const cacheRef = useRef(new Map<string, SpotifyTrack[]>())
   const cooldownUntilRef = useRef(0)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const debounceTimerRef = useRef<number>(0)
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
 
-  const runSearch = useCallback(async () => {
-    const normalizedQuery = query.trim()
-    const cacheKey = normalizedQuery.toLowerCase()
-
-    if (normalizedQuery.length < 3) {
-      setResults([])
-      setStatus('Type 3+ chars')
-      return
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
     }
 
-    const cachedResults = cacheRef.current.get(cacheKey)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
+  const executeSearch = useCallback(async (searchQuery: string, signal: AbortSignal) => {
+    const cacheKey = searchQuery.toLowerCase()
+
+    const cachedResults = cacheRef.current.get(cacheKey)
     if (cachedResults) {
       setResults(cachedResults)
       setIsOpen(true)
@@ -36,13 +47,13 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
     }
 
     const cooldownMs = cooldownUntilRef.current - Date.now()
-
     if (cooldownMs > 0) {
       setStatus(`Rate limit. Wait ${Math.ceil(cooldownMs / 1000)}s.`)
       return
     }
 
     const accessToken = await getValidAccessToken(spotifyConfig)
+    if (signal.aborted) return
 
     if (!accessToken) {
       setStatus('Login required')
@@ -52,15 +63,20 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
     setStatus('Searching...')
 
     try {
-      const response = await searchTracks(accessToken, normalizedQuery, 6)
+      const response = await searchTracks(accessToken, searchQuery, 6, signal)
+      if (signal.aborted) return
+
       cacheRef.current.set(cacheKey, response.tracks.items)
       setResults(response.tracks.items)
       setIsOpen(true)
       setStatus(response.tracks.items.length ? `${response.tracks.items.length} results` : 'No results')
     } catch (error) {
+      if (signal.aborted) return
+
       if (error instanceof SpotifyApiError && error.status === 429) {
-        cooldownUntilRef.current = Date.now() + (error.retryAfterSeconds ?? 15) * 1000
-        setStatus(`Rate limit. Wait ${error.retryAfterSeconds ?? 15}s.`)
+        const waitSeconds = error.retryAfterSeconds ?? 15
+        cooldownUntilRef.current = Date.now() + waitSeconds * 1000
+        setStatus(`Rate limit. Wait ${waitSeconds}s.`)
         return
       }
 
@@ -69,9 +85,67 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
         return
       }
 
+      if (error instanceof DOMException && error.name === 'AbortError') return
+
       setStatus(error instanceof Error ? error.message : 'Search failed')
     }
-  }, [query])
+  }, [])
+
+  // Debounced search triggered by query changes
+  useEffect(() => {
+    const normalizedQuery = query.trim()
+
+    // Clear previous debounce timer
+    window.clearTimeout(debounceTimerRef.current)
+
+    if (normalizedQuery.length < MIN_QUERY_LENGTH) {
+      // Abort any in-flight request
+      abortControllerRef.current?.abort()
+      abortControllerRef.current = null
+
+      if (normalizedQuery.length === 0) {
+        setResults([])
+        setIsOpen(false)
+        setStatus('')
+      } else {
+        setStatus(`Type ${MIN_QUERY_LENGTH}+ chars`)
+      }
+      return
+    }
+
+    // Check cache immediately (no debounce needed)
+    const cacheKey = normalizedQuery.toLowerCase()
+    const cachedResults = cacheRef.current.get(cacheKey)
+    if (cachedResults) {
+      setResults(cachedResults)
+      setIsOpen(true)
+      setStatus(`${cachedResults.length} cached results`)
+      return
+    }
+
+    setStatus('Typing...')
+
+    debounceTimerRef.current = window.setTimeout(() => {
+      // Abort any previous in-flight request
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
+      void executeSearch(normalizedQuery, controller.signal)
+    }, DEBOUNCE_MS)
+
+    return () => {
+      window.clearTimeout(debounceTimerRef.current)
+    }
+  }, [query, executeSearch])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+      window.clearTimeout(debounceTimerRef.current)
+    }
+  }, [])
 
   const handlePlayTrack = useCallback(async (track: SpotifyTrack) => {
     const accessToken = await getValidAccessToken(spotifyConfig)
@@ -91,9 +165,24 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
       setStatus(`▶ ${track.name}`)
       onTrackPlayed?.()
     } catch (error) {
+      if (error instanceof SpotifyApiError && error.status === 404 && error.message.toLowerCase().includes('device')) {
+        const webDeviceId = getWebPlayerDeviceId()
+        if (webDeviceId) {
+          try {
+            await play(accessToken, { uris: [track.uri], deviceId: webDeviceId })
+            setStatus(`▶ ${track.name}`)
+            onTrackPlayed?.()
+            return
+          } catch (retryError) {
+            error = retryError
+          }
+        }
+      }
+
       if (error instanceof SpotifyApiError && error.status === 429) {
-        cooldownUntilRef.current = Date.now() + (error.retryAfterSeconds ?? 15) * 1000
-        setStatus(`Rate limit. Wait ${error.retryAfterSeconds ?? 15}s.`)
+        const waitSeconds = error.retryAfterSeconds ?? 15
+        cooldownUntilRef.current = Date.now() + waitSeconds * 1000
+        setStatus(`Rate limit. Wait ${waitSeconds}s.`)
         return
       }
 
@@ -102,34 +191,18 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
   }, [onTrackPlayed])
 
   return (
-    <form
-      className="relative flex min-w-0 flex-1 gap-2 sm:min-w-[320px]"
-      onSubmit={(event) => {
-        event.preventDefault()
-        void runSearch()
-      }}
-    >
+    <div ref={wrapperRef} className="relative flex min-w-0 flex-1 sm:min-w-[320px]">
       <input
         className="w-full border border-[#444] bg-[#222] px-3 py-2 text-xs normal-case text-[#ddd] outline-none placeholder:text-[#666] focus:border-[#888]"
         aria-label="Search Spotify tracks"
-        onChange={(event) => {
-          setQuery(event.target.value)
-          if (!event.target.value.trim()) {
-            setIsOpen(false)
-            setResults([])
-            setStatus('')
-          }
+        onChange={(event) => setQuery(event.target.value)}
+        onFocus={() => {
+          if (results.length > 0) setIsOpen(true)
         }}
         placeholder="Search song..."
         type="search"
         value={query}
       />
-      <button
-        className="shrink-0 border border-[#444] bg-[#222] px-3 py-2 text-xs uppercase text-[#ddd] hover:border-[#777] focus:border-[#888] focus:outline-none"
-        type="submit"
-      >
-        Search
-      </button>
       {status ? (
         <p className="absolute left-0 top-full mt-1 text-[10px] normal-case text-[#777]">{status}</p>
       ) : null}
@@ -154,7 +227,7 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
           ))}
         </div>
       ) : null}
-    </form>
+    </div>
   )
 }
 

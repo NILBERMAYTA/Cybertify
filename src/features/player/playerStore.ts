@@ -11,9 +11,15 @@ type PlayerState = {
   albumName: string
   artistName: string
   trackName: string
+  shuffleState: boolean
+  repeatState: 'off' | 'context' | 'track'
+  volumePercent: number
   setCurrentTrack: (track: SpotifyTrack | null) => void
   setPlaybackState: (playback: SpotifyPlaybackState | null) => void
   tickProgress: (deltaMs: number) => void
+  setShuffleState: (shuffle: boolean) => void
+  setRepeatState: (repeat: 'off' | 'context' | 'track') => void
+  setVolumePercent: (volume: number) => void
 }
 
 function getTrackMetadata(track: SpotifyTrack | null) {
@@ -35,6 +41,9 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   albumName: '',
   artistName: '',
   trackName: '',
+  shuffleState: false,
+  repeatState: 'off',
+  volumePercent: 100,
   setCurrentTrack: (track) =>
     set({
       currentTrack: track,
@@ -45,6 +54,9 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       currentTrack: playback?.item ?? null,
       isPlaying: playback?.is_playing ?? false,
       progressMs: playback?.progress_ms ?? 0,
+      shuffleState: playback?.shuffle_state ?? false,
+      repeatState: playback?.repeat_state ?? 'off',
+      volumePercent: playback?.device?.volume_percent ?? 100,
       ...getTrackMetadata(playback?.item ?? null),
     }),
   tickProgress: (deltaMs) =>
@@ -57,4 +69,8 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         progressMs: Math.min(state.durationMs, state.progressMs + deltaMs),
       }
     }),
+  setShuffleState: (shuffle) => set({ shuffleState: shuffle }),
+  setRepeatState: (repeat) => set({ repeatState: repeat }),
+  setVolumePercent: (volume) => set({ volumePercent: volume }),
 }))
+

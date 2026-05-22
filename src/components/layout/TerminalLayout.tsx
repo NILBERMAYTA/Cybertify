@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { paths } from '../../app/paths'
 import { LyricsPanel } from '../lyrics/LyricsPanel'
 import { PlayerCard } from '../player/PlayerCard'
+import { PlaybackControls } from '../player/PlaybackControls'
+import { DeviceSelector } from '../player/DeviceSelector'
 import { TrackSearchPanel } from '../home/TrackSearchPanel'
 import { AudioVisualizer } from '../visualizer/AudioVisualizer'
 import { spotifyConfig } from '../../app/config'
@@ -16,6 +18,7 @@ import { motion } from 'framer-motion'
 import { TerminalPanel } from './TerminalPanel'
 import { TerminalShell } from './TerminalShell'
 import { extractColors } from '../../features/theme/extractColors'
+import { initWebPlayer, disconnectWebPlayer } from '../../features/player/webPlaybackSdk'
 
 const POLL_INTERVAL_MS = 5000
 
@@ -37,6 +40,11 @@ function TerminalLayoutComponent() {
   const trackName = usePlayerStore((state) => state.trackName)
   const albumImage = usePlayerStore((state) => state.albumImage)
   const [status, setStatus] = useState('sync ready')
+
+  useEffect(() => {
+    void initWebPlayer()
+    return () => disconnectWebPlayer()
+  }, [])
 
   useEffect(() => {
     if (!albumImage) {
@@ -70,49 +78,59 @@ function TerminalLayoutComponent() {
 
     if (!accessToken) {
       setStatus('login required')
-      return
+      return null
     }
 
     try {
       const playback = await getPlaybackState(accessToken, signal)
       setPlaybackState(playback)
       setStatus(playback?.item ? 'online // sync' : 'waiting for Spotify playback')
+      return null // no error, keep normal interval
     } catch (error) {
       if (signal?.aborted) {
-        return
+        return null
       }
 
       if (error instanceof SpotifyApiError && error.status === 429) {
-        setStatus(`Spotify rate limit. Wait ${error.retryAfterSeconds ?? 15}s.`)
-        return
+        const backoffMs = (error.retryAfterSeconds ?? 15) * 1000
+        setStatus(`Spotify rate limit. Pausing ${Math.ceil(backoffMs / 1000)}s.`)
+        return backoffMs
       }
 
       if (error instanceof SpotifyApiError && [502, 503, 504].includes(error.status)) {
         setStatus('Spotify gateway temporal. Reintentando...')
-        return
+        return null
       }
 
       if (error instanceof Error && error.message.includes('Bad gateway')) {
         setStatus('Spotify gateway temporal. Reintentando...')
-        return
+        return null
       }
 
       setStatus(error instanceof Error ? error.message : 'Spotify request failed')
+      return null
     }
   }, [setPlaybackState])
 
   useEffect(() => {
     const controller = new AbortController()
+    let timeoutId: number | undefined
 
-    void pollPlayback(controller.signal)
+    async function poll() {
+      const backoffMs = await pollPlayback(controller.signal)
 
-    const intervalId = window.setInterval(() => {
-      void pollPlayback(controller.signal)
-    }, POLL_INTERVAL_MS)
+      if (controller.signal.aborted) return
+
+      // If rate limited, wait longer before next poll
+      const nextDelay = backoffMs ?? POLL_INTERVAL_MS
+      timeoutId = window.setTimeout(poll, nextDelay)
+    }
+
+    void poll()
 
     return () => {
       controller.abort()
-      window.clearInterval(intervalId)
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [pollPlayback])
 
@@ -157,9 +175,13 @@ function TerminalLayoutComponent() {
                 </div>
               </div>
 
-              <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-[#555]">
-                Controlado desde Spotify oficial
-              </p>
+              <div className="mt-4">
+                <PlaybackControls onAction={() => void pollPlayback()} />
+              </div>
+
+              <div className="mt-3">
+                <DeviceSelector onTransfer={() => void pollPlayback()} />
+              </div>
             </div>
           </TerminalPanel>
 

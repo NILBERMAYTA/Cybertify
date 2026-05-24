@@ -123,7 +123,6 @@ function PlaylistSkeleton() {
 export function RecommendedPlaylistsPanel() {
   const [sections, setSections] = useState<PlaylistSection[]>([])
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     let active = true

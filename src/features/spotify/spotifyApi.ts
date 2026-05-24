@@ -128,12 +128,25 @@ export function searchTracks(accessToken: string, query: string, limit = 8, sign
   return spotifyFetch<SpotifySearchTracksResponse>(`/search?${params.toString()}`, accessToken, { signal })
 }
 
-export function play(accessToken: string, options: { uris?: string[]; deviceId?: string; signal?: AbortSignal } = {}) {
-  const body = options.uris ? { uris: options.uris } : undefined
+export function play(accessToken: string, options: { uris?: string[]; context_uri?: string; offset?: { position?: number; uri?: string }; deviceId?: string; signal?: AbortSignal } = {}) {
+  const body: any = {}
+  
+  if (options.context_uri) {
+    body.context_uri = options.context_uri
+    if (options.offset) {
+      body.offset = options.offset
+    }
+  } else if (options.uris) {
+    body.uris = options.uris
+    if (options.offset) {
+      body.offset = options.offset
+    }
+  }
+
   const query = options.deviceId ? `?device_id=${options.deviceId}` : ''
 
   return spotifyFetch<void>(`/me/player/play${query}`, accessToken, {
-    body,
+    body: Object.keys(body).length > 0 ? body : undefined,
     method: 'PUT',
     signal: options.signal,
   })

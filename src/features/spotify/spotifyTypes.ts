@@ -33,6 +33,11 @@ export type SpotifyPlaybackState = {
   shuffle_state?: boolean
   repeat_state?: 'off' | 'context' | 'track'
   device?: SpotifyDevice
+  context?: {
+    type: string
+    href: string
+    uri: string
+  } | null
 }
 
 export type SpotifySearchTracksResponse = {

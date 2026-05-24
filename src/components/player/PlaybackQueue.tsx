@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getValidAccessToken } from '../../features/auth/spotifyAuth'
 import { spotifyConfig } from '../../app/config'
-import { getQueue, play } from '../../features/spotify/spotifyApi'
+import { getQueue, play, skipToNext } from '../../features/spotify/spotifyApi'
 import type { SpotifyTrack } from '../../features/spotify/spotifyTypes'
 import { usePlayerStore } from '../../features/player/playerStore'
 
@@ -9,6 +9,7 @@ export function PlaybackQueue() {
   const [queue, setQueue] = useState<SpotifyTrack[]>([])
   const [loading, setLoading] = useState(false)
   const currentTrackId = usePlayerStore((state) => state.currentTrack?.id)
+  const contextUri = usePlayerStore((state) => state.contextUri)
 
   useEffect(() => {
     let active = true
@@ -45,10 +46,17 @@ export function PlaybackQueue() {
     const token = await getValidAccessToken(spotifyConfig)
     if (!token) return
 
-    // Get all URIs from the clicked item onwards
-    const uris = queue.slice(index).map((t) => t.uri)
     try {
-      await play(token, { uris })
+      const track = queue[index]
+      if (contextUri) {
+        // If we are playing from a playlist/album context, skip directly to the track while maintaining context
+        await play(token, { context_uri: contextUri, offset: { uri: track.uri } })
+      } else {
+        // If there's no context, skip sequentially to maintain the queue
+        for (let i = 0; i <= index; i++) {
+          await skipToNext(token)
+        }
+      }
     } catch (err) {
       console.error('Failed to play queue item', err)
     }

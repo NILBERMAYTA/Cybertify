@@ -14,6 +14,7 @@ type PlayerState = {
   repeatState: 'off' | 'context' | 'track'
   volumePercent: number
   activeDevice: SpotifyDevice | null
+  contextUri: string | null
   setCurrentTrack: (track: SpotifyTrack | null) => void
   setPlaybackState: (playback: SpotifyPlaybackState | null) => void
   tickProgress: (deltaMs: number) => void
@@ -45,6 +46,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   repeatState: 'off',
   volumePercent: 100,
   activeDevice: null,
+  contextUri: null,
   setCurrentTrack: (track) =>
     set({
       currentTrack: track,
@@ -81,6 +83,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         repeatState: playback?.repeat_state ?? 'off',
         volumePercent: playback?.device?.volume_percent ?? 100,
         activeDevice: playback?.device ?? null,
+        contextUri: playback?.context?.uri ?? null,
         ...getTrackMetadata(playback?.item ?? null),
       }
     }),

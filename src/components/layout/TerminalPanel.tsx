@@ -14,7 +14,7 @@ function TerminalPanelComponent({ title, children, className = '' }: TerminalPan
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className={`border bg-[#1a1a1a] ${className}`}
+      className={`border bg-[#1a1a1a] min-w-0 flex flex-col ${className}`}
       style={{ 
         borderColor: 'var(--color-dynamic-primary, #00f5ff)',
         boxShadow: '0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3)), inset 0 0 15px var(--color-dynamic-glow, rgba(0, 245, 255, 0.3))'
@@ -28,7 +28,7 @@ function TerminalPanelComponent({ title, children, className = '' }: TerminalPan
           {title}
         </header>
       ) : null}
-      <div className="p-4">{children}</div>
+      <div className="p-4 min-w-0 w-full overflow-hidden">{children}</div>
     </motion.section>
   )
 }

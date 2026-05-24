@@ -142,7 +142,7 @@ function TerminalLayoutComponent() {
     const rect = e.currentTarget.getBoundingClientRect()
     const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
     const newPositionMs = Math.floor(percent * durationMs)
-    
+
     // Optimistic UI update
     usePlayerStore.setState({ progressMs: newPositionMs })
 
@@ -159,7 +159,7 @@ function TerminalLayoutComponent() {
 
   return (
     <TerminalShell contentClassName="mx-auto flex w-full max-w-[1440px] flex-col gap-3 px-3 py-3">
-      <header 
+      <header
         className="flex flex-wrap items-start justify-between gap-3 border bg-[#1a1a1a] px-4 py-2 text-xs uppercase tracking-wider transition-colors duration-500"
         style={{
           borderColor: 'var(--color-dynamic-primary, #333)',
@@ -167,8 +167,8 @@ function TerminalLayoutComponent() {
           color: 'var(--color-dynamic-primary, #999)'
         }}
       >
-        <Link 
-          className="shrink-0 py-2 transition-all duration-300 hover:brightness-150" 
+        <Link
+          className="shrink-0 py-2 transition-all duration-300 hover:brightness-150"
           to={paths.home}
           style={{ textShadow: '0 0 5px var(--color-dynamic-glow, transparent)' }}
         >
@@ -176,8 +176,8 @@ function TerminalLayoutComponent() {
         </Link>
         <TrackSearchPanel onTrackPlayed={() => void pollPlayback()} />
         <nav className="flex shrink-0 items-center gap-4 py-2">
-          <Link 
-            className="transition-all duration-300 hover:brightness-150" 
+          <Link
+            className="transition-all duration-300 hover:brightness-150"
             to={paths.home}
             style={{ textShadow: '0 0 5px var(--color-dynamic-glow, transparent)' }}
           >
@@ -195,7 +195,7 @@ function TerminalLayoutComponent() {
           <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--color-dynamic-primary, #00f5ff)', boxShadow: '0 -5px 15px -5px var(--color-dynamic-glow, rgba(0,245,255,0.3))' }}>
             {/* Read-only progress bar */}
             <div className="space-y-1 text-xs text-[#999]">
-              <div 
+              <div
                 className="h-3 w-full border border-[#444] bg-[#222] cursor-pointer"
                 onClick={handleProgressClick}
               >

@@ -52,6 +52,18 @@ export type SpotifySearchTracksResponse = {
   }
 }
 
+export type SpotifySearchPlaylistsResponse = {
+  playlists: {
+    href: string
+    items: SpotifyPlaylist[]
+    limit: number
+    next: string | null
+    offset: number
+    previous: string | null
+    total: number
+  }
+}
+
 export type SpotifyUserProfile = {
   country?: string
   display_name: string | null
@@ -95,3 +107,36 @@ export type SpotifyQueueResponse = {
   queue: SpotifyTrack[]
 }
 
+export type SpotifyPlaylist = {
+  id: string
+  name: string
+  description: string
+  images: SpotifyImage[]
+  uri: string
+  owner: {
+    display_name: string
+  }
+}
+
+export type SpotifyFeaturedPlaylistsResponse = {
+  message: string
+  playlists: {
+    items: SpotifyPlaylist[]
+  }
+}
+
+export type SpotifyUserPlaylistsResponse = {
+  items: SpotifyPlaylist[]
+  total: number
+}
+
+export type SpotifyCategory = {
+  id: string
+  name: string
+}
+
+export type SpotifyCategoriesResponse = {
+  categories: {
+    items: SpotifyCategory[]
+  }
+}

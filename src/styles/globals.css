@@ -18,6 +18,12 @@
 
 html {
   background: #111;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -27,6 +33,12 @@ body {
   font-family: var(--font-sans);
   color: #ddd;
   background: #111;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 button,

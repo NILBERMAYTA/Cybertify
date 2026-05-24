@@ -5,6 +5,7 @@ import { LyricsPanel } from '../lyrics/LyricsPanel'
 import { PlayerCard } from '../player/PlayerCard'
 import { PlaybackControls } from '../player/PlaybackControls'
 import { DeviceSelector } from '../player/DeviceSelector'
+import { PlaybackQueue } from '../player/PlaybackQueue'
 import { TrackSearchPanel } from '../home/TrackSearchPanel'
 import { AudioVisualizer } from '../visualizer/AudioVisualizer'
 import { spotifyConfig } from '../../app/config'
@@ -256,6 +257,11 @@ function TerminalLayoutComponent() {
             <AudioVisualizer isPlaying={isPlaying} progressMs={progressMs} albumImage={usePlayerStore((state) => state.albumImage)} />
           </div>
         </motion.div>
+
+        {/* Right column: Playback queue */}
+        <TerminalPanel className="terminal-queue min-h-0 overflow-y-auto">
+          <PlaybackQueue />
+        </TerminalPanel>
       </section>
     </TerminalShell>
   )

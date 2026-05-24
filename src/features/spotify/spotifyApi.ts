@@ -3,6 +3,7 @@ import type {
   SpotifyPlaybackState,
   SpotifySearchTracksResponse,
   SpotifyUserProfile,
+  SpotifyQueueResponse,
 } from './spotifyTypes'
 
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1'
@@ -199,6 +200,10 @@ export function transferPlayback(accessToken: string, deviceId: string, startPla
     method: 'PUT',
     signal,
   })
+}
+
+export function getQueue(accessToken: string, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyQueueResponse>('/me/player/queue', accessToken, { signal })
 }
 
 export const fetchProfile = getCurrentUser

@@ -85,3 +85,8 @@ export type SpotifyDevicesResponse = {
   devices: SpotifyDevice[]
 }
 
+export type SpotifyQueueResponse = {
+  currently_playing: SpotifyTrack | null
+  queue: SpotifyTrack[]
+}
+

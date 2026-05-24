@@ -1,5 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { getLyricsFromLrcLib } from '../../features/lyrics/lrclibApi'
+import { translateLyrics } from '../../features/lyrics/translateApi'
+import { getCachedTranslation, setCachedTranslation } from '../../features/lyrics/translationCache'
 
 type LyricsPanelProps = {
   albumName?: string
@@ -54,11 +56,18 @@ function plainLyricsToLines(plainLyrics: string): LyricLine[] {
 
 function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, progressMs = 0, trackName }: LyricsPanelProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const activeLineRef = useRef<HTMLParagraphElement | null>(null)
+  const activeLineRef = useRef<HTMLDivElement | null>(null)
   const [fetchedLrcText, setFetchedLrcText] = useState<string | null>(null)
   const [plainLyrics, setPlainLyrics] = useState<string | null>(null)
   const [source, setSource] = useState<'lrclib' | 'mock' | 'plain'>('mock')
   const [status, setStatus] = useState('waiting')
+  
+  // Translation State
+  const [isTranslationEnabled, setIsTranslationEnabled] = useState(false)
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [translatedLines, setTranslatedLines] = useState<string[]>([])
+  const [targetLang, setTargetLang] = useState<'es' | 'en'>('es')
+
   const activeLrcText = fetchedLrcText ?? lrcText ?? null
   const lines = useMemo(() => {
     if (activeLrcText) {
@@ -76,6 +85,7 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
     lines.findLastIndex((line) => line.timeMs <= progressMs),
   )
 
+  // Scroll to active line
   useEffect(() => {
     const container = containerRef.current
     const activeLine = activeLineRef.current
@@ -92,6 +102,7 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
     }
   }, [activeIndex])
 
+  // Fetch lyrics
   useEffect(() => {
     if (!trackName || !artistName) {
       setFetchedLrcText(null)
@@ -166,11 +177,75 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
     return () => controller.abort()
   }, [albumName, artistName, durationMs, trackName])
 
+  // Translation Effect
+  useEffect(() => {
+    if (!isTranslationEnabled || lines === mockLyrics || !trackName || !artistName) {
+      return
+    }
+
+    const textsToTranslate = lines.map(line => line.text)
+    if (textsToTranslate.length === 0) return
+
+    // Check Cache
+    const cached = getCachedTranslation(trackName, artistName, targetLang)
+    if (cached && cached.length >= textsToTranslate.length) {
+      setTranslatedLines(cached)
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function doTranslation() {
+      setIsTranslating(true)
+      const result = await translateLyrics({ texts: textsToTranslate, targetLang }, controller.signal)
+      
+      if (!controller.signal.aborted) {
+        setIsTranslating(false)
+        if (result) {
+          setTranslatedLines(result)
+          setCachedTranslation(trackName!, artistName!, targetLang, result)
+        }
+      }
+    }
+
+    void doTranslation()
+
+    return () => {
+      controller.abort()
+      setIsTranslating(false)
+    }
+  }, [lines, isTranslationEnabled, trackName, artistName, targetLang])
+
   return (
     <div className="text-sm">
       <div className="mb-3 flex items-center justify-between border-b border-[#333] pb-2 text-xs uppercase">
         <span className="text-[#999]">LYRICS: {trackName ? 'sync' : 'idle'}</span>
-        <span className="text-[#666]">source: {source} / {status}</span>
+        <div className="flex items-center gap-4">
+          {isTranslationEnabled && (
+            <div className="flex items-center gap-1 border border-[#333] rounded px-1">
+              <button 
+                onClick={() => setTargetLang('es')}
+                className={`px-2 py-0.5 ${targetLang === 'es' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-[#999]'}`}
+              >
+                ES
+              </button>
+              <button 
+                onClick={() => setTargetLang('en')}
+                className={`px-2 py-0.5 ${targetLang === 'en' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-[#999]'}`}
+              >
+                EN
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => setIsTranslationEnabled(!isTranslationEnabled)}
+            className={`transition-colors hover:text-white ${isTranslationEnabled ? 'text-[var(--color-dynamic-primary,#00f5ff)]' : 'text-[#666]'}`}
+            title="Translate Lyrics"
+          >
+            {isTranslating ? 'TRANSLATING...' : 'TRADUCIR'}
+          </button>
+          <span className="text-[#666]">source: {source} / {status}</span>
+        </div>
       </div>
 
       <div className="scrollbar-hide relative max-h-[48vh] space-y-1 overflow-y-auto pr-2 text-[#999]" ref={containerRef}>
@@ -179,11 +254,11 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
           const isPrev = index === activeIndex - 1
           const isNext = index === activeIndex + 1
 
-          let className = 'border-l-2 border-transparent px-3 py-1 text-[#888] transition-all duration-300'
+          let className = 'border-l-2 border-transparent px-3 py-1 text-[#888] transition-all duration-300 flex flex-col'
           let style: React.CSSProperties = {}
 
           if (isActive) {
-            className = 'border-l-2 px-3 py-2 text-lg font-bold transition-all duration-300'
+            className = 'border-l-2 px-3 py-2 text-lg font-bold transition-all duration-300 flex flex-col'
             style = { 
               color: '#ffffff',
               borderColor: 'var(--color-dynamic-primary, #00f5ff)',
@@ -193,7 +268,7 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
               transformOrigin: 'left center'
             }
           } else if (isPrev || isNext) {
-            className = 'border-l-2 border-transparent px-3 py-1 transition-all duration-300'
+            className = 'border-l-2 border-transparent px-3 py-1 transition-all duration-300 flex flex-col'
             style = {
               color: 'var(--color-dynamic-primary, #00f5ff)',
               opacity: 0.85,
@@ -202,15 +277,28 @@ function LyricsPanelComponent({ albumName, artistName, durationMs, lrcText, prog
           }
 
           return (
-            <p
+            <div
               className={className}
               style={style}
               key={`${line.timeMs}-${line.text}`}
               ref={isActive ? activeLineRef : null}
             >
-              <span className="mr-2 text-xs text-[#666]">[{Math.floor(line.timeMs / 1000).toString().padStart(3, '0')}]</span>
-              {line.text}
-            </p>
+              <p>
+                <span className="mr-2 text-xs text-[#666] opacity-70">[{Math.floor(line.timeMs / 1000).toString().padStart(3, '0')}]</span>
+                {line.text}
+              </p>
+              {isTranslationEnabled && translatedLines[index] && (
+                <p 
+                  className={`mt-1 text-[0.85em] ${isActive ? 'opacity-100 font-medium' : 'opacity-60'}`} 
+                  style={{
+                    color: isActive ? 'var(--color-dynamic-secondary, #ff00f5)' : 'inherit',
+                    textShadow: isActive ? '0 0 10px var(--color-dynamic-secondary, rgba(255,0,245,0.5))' : 'none'
+                  }}
+                >
+                  {translatedLines[index]}
+                </p>
+              )}
+            </div>
           )
         })}
       </div>

@@ -3,6 +3,11 @@ import type {
   SpotifyPlaybackState,
   SpotifySearchTracksResponse,
   SpotifyUserProfile,
+  SpotifyQueueResponse,
+  SpotifyFeaturedPlaylistsResponse,
+  SpotifyUserPlaylistsResponse,
+  SpotifyCategoriesResponse,
+  SpotifySearchPlaylistsResponse,
 } from './spotifyTypes'
 
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1'
@@ -127,12 +132,36 @@ export function searchTracks(accessToken: string, query: string, limit = 8, sign
   return spotifyFetch<SpotifySearchTracksResponse>(`/search?${params.toString()}`, accessToken, { signal })
 }
 
-export function play(accessToken: string, options: { uris?: string[]; deviceId?: string; signal?: AbortSignal } = {}) {
-  const body = options.uris ? { uris: options.uris } : undefined
+export function searchPlaylists(accessToken: string, query: string, limit = 8, signal?: AbortSignal) {
+  const safeLimit = Math.min(50, Math.max(1, Math.round(limit)))
+  const params = new URLSearchParams({
+    limit: String(safeLimit),
+    q: query,
+    type: 'playlist',
+  })
+
+  return spotifyFetch<SpotifySearchPlaylistsResponse>(`/search?${params.toString()}`, accessToken, { signal })
+}
+
+export function play(accessToken: string, options: { uris?: string[]; context_uri?: string; offset?: { position?: number; uri?: string }; deviceId?: string; signal?: AbortSignal } = {}) {
+  const body: any = {}
+  
+  if (options.context_uri) {
+    body.context_uri = options.context_uri
+    if (options.offset) {
+      body.offset = options.offset
+    }
+  } else if (options.uris) {
+    body.uris = options.uris
+    if (options.offset) {
+      body.offset = options.offset
+    }
+  }
+
   const query = options.deviceId ? `?device_id=${options.deviceId}` : ''
 
   return spotifyFetch<void>(`/me/player/play${query}`, accessToken, {
-    body,
+    body: Object.keys(body).length > 0 ? body : undefined,
     method: 'PUT',
     signal: options.signal,
   })
@@ -199,6 +228,26 @@ export function transferPlayback(accessToken: string, deviceId: string, startPla
     method: 'PUT',
     signal,
   })
+}
+
+export function getQueue(accessToken: string, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyQueueResponse>('/me/player/queue', accessToken, { signal })
+}
+
+export function getFeaturedPlaylists(accessToken: string, limit = 10, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyFeaturedPlaylistsResponse>(`/browse/featured-playlists?limit=${limit}`, accessToken, { signal })
+}
+
+export function getUserPlaylists(accessToken: string, limit = 10, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyUserPlaylistsResponse>(`/me/playlists?limit=${limit}`, accessToken, { signal })
+}
+
+export function getCategoryPlaylists(accessToken: string, categoryId: string, limit = 10, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyFeaturedPlaylistsResponse>(`/browse/categories/${categoryId}/playlists?limit=${limit}`, accessToken, { signal })
+}
+
+export function getCategories(accessToken: string, limit = 10, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyCategoriesResponse>(`/browse/categories?limit=${limit}`, accessToken, { signal })
 }
 
 export const fetchProfile = getCurrentUser

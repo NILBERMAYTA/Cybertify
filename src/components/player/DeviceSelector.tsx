@@ -242,7 +242,7 @@ function DeviceSelectorComponent({ onTransfer }: DeviceSelectorProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden border border-[#333] bg-[#121212] shadow-2xl"
+            className="absolute left-0 right-0 bottom-full z-40 mb-1 overflow-hidden border border-[#333] bg-[#121212] shadow-2xl"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}

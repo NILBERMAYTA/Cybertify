@@ -33,12 +33,29 @@ export type SpotifyPlaybackState = {
   shuffle_state?: boolean
   repeat_state?: 'off' | 'context' | 'track'
   device?: SpotifyDevice
+  context?: {
+    type: string
+    href: string
+    uri: string
+  } | null
 }
 
 export type SpotifySearchTracksResponse = {
   tracks: {
     href: string
     items: SpotifyTrack[]
+    limit: number
+    next: string | null
+    offset: number
+    previous: string | null
+    total: number
+  }
+}
+
+export type SpotifySearchPlaylistsResponse = {
+  playlists: {
+    href: string
+    items: SpotifyPlaylist[]
     limit: number
     next: string | null
     offset: number
@@ -85,3 +102,41 @@ export type SpotifyDevicesResponse = {
   devices: SpotifyDevice[]
 }
 
+export type SpotifyQueueResponse = {
+  currently_playing: SpotifyTrack | null
+  queue: SpotifyTrack[]
+}
+
+export type SpotifyPlaylist = {
+  id: string
+  name: string
+  description: string
+  images: SpotifyImage[]
+  uri: string
+  owner: {
+    display_name: string
+  }
+}
+
+export type SpotifyFeaturedPlaylistsResponse = {
+  message: string
+  playlists: {
+    items: SpotifyPlaylist[]
+  }
+}
+
+export type SpotifyUserPlaylistsResponse = {
+  items: SpotifyPlaylist[]
+  total: number
+}
+
+export type SpotifyCategory = {
+  id: string
+  name: string
+}
+
+export type SpotifyCategoriesResponse = {
+  categories: {
+    items: SpotifyCategory[]
+  }
+}

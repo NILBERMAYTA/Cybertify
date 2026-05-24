@@ -1,8 +1,8 @@
 /* MVP minimal terminal styles */
 
 .terminal-dashboard {
-  grid-template-areas: 'left lyrics';
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  grid-template-areas: 'left lyrics queue';
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(200px, 250px);
   grid-template-rows: minmax(0, 1fr);
 }
 
@@ -12,6 +12,10 @@
 
 .terminal-lyrics {
   grid-area: lyrics;
+}
+
+.terminal-queue {
+  grid-area: queue;
 }
 
 .terminal-button {
@@ -135,9 +139,10 @@
   .terminal-dashboard {
     grid-template-areas:
       'left'
-      'lyrics';
+      'lyrics'
+      'queue';
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(300px, 1fr);
+    grid-template-rows: auto minmax(300px, 1fr) minmax(200px, auto);
   }
 }
 

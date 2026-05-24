@@ -4,6 +4,7 @@ import { paths } from '../app/paths'
 import { TerminalPanel } from '../components/layout/TerminalPanel'
 import { TerminalShell } from '../components/layout/TerminalShell'
 import { SpotifyProfilePanel } from '../components/profile/SpotifyProfilePanel'
+import { RecommendedPlaylistsPanel } from '../components/home/RecommendedPlaylistsPanel'
 
 function HomePageComponent() {
   return (
@@ -16,6 +17,9 @@ function HomePageComponent() {
       </header>
       <TerminalPanel title="auth / profile">
         <SpotifyProfilePanel />
+      </TerminalPanel>
+      <TerminalPanel title="recommended playlists">
+        <RecommendedPlaylistsPanel />
       </TerminalPanel>
     </TerminalShell>
   )

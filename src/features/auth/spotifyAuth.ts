@@ -13,6 +13,8 @@ export const SPOTIFY_SCOPES = [
   'user-read-currently-playing',
   'user-modify-playback-state',
   'streaming',
+  'playlist-read-private',
+  'playlist-read-collaborative',
 ] as const
 
 export type SpotifyAuthConfig = {

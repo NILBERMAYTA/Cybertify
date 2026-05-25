@@ -140,3 +140,10 @@ export type SpotifyCategoriesResponse = {
     items: SpotifyCategory[]
   }
 }
+
+export type SpotifyRecentlyPlayedResponse = {
+  items: {
+    track: SpotifyTrack
+    played_at: string
+  }[]
+}

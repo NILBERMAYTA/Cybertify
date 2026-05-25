@@ -133,14 +133,7 @@ export function RecommendedPlaylistsPanel() {
 
       setLoading(true)
       try {
-        // Fetch user's own playlists and custom personalized searches
-        const [userRes, mixRes, radioRes, thisIsRes, exitosRes] = await Promise.all([
-          getUserPlaylists(token, 10).catch(() => null),
-          searchPlaylists(token, 'Mix Diario', 10).catch(() => null),
-          searchPlaylists(token, 'Radio', 10).catch(() => null),
-          searchPlaylists(token, 'This Is', 10).catch(() => null),
-          searchPlaylists(token, 'Éxitos', 10).catch(() => null),
-        ])
+        const userRes = await getUserPlaylists(token, 50).catch(() => null)
 
         if (!active) return
 
@@ -148,22 +141,6 @@ export function RecommendedPlaylistsPanel() {
 
         if (userRes?.items?.length) {
           newSections.push({ title: 'Tus Playlists', playlists: userRes.items.filter(Boolean) })
-        }
-
-        if (mixRes?.playlists?.items?.length) {
-          newSections.push({ title: 'Tus Mixes Diarios', playlists: mixRes.playlists.items.filter(Boolean) })
-        }
-
-        if (thisIsRes?.playlists?.items?.length) {
-          newSections.push({ title: 'Lo mejor de los artistas', playlists: thisIsRes.playlists.items.filter(Boolean) })
-        }
-
-        if (radioRes?.playlists?.items?.length) {
-          newSections.push({ title: 'Radios recomendadas', playlists: radioRes.playlists.items.filter(Boolean) })
-        }
-
-        if (exitosRes?.playlists?.items?.length) {
-          newSections.push({ title: 'Éxitos y Top Lists', playlists: exitosRes.playlists.items.filter(Boolean) })
         }
 
         if (active) {

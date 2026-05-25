@@ -28,7 +28,7 @@ function AnimatedBackgroundComponent() {
       
       const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-dynamic-primary').trim() || '#00f5ff'
       
-      ctx.globalAlpha = 0.1
+      ctx.globalAlpha = 0.3
       ctx.strokeStyle = primaryColor
       ctx.lineWidth = 1
 

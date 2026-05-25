@@ -8,7 +8,7 @@ type TerminalShellProps = {
 
 function TerminalShellComponent({ children, contentClassName = '' }: TerminalShellProps) {
   return (
-    <main className="min-h-screen bg-[#111] font-mono text-[#ddd]">
+    <main className="min-h-screen bg-transparent font-mono text-[#ddd] relative z-10">
       <div className={`min-h-screen ${contentClassName}`}>{children}</div>
     </main>
   )

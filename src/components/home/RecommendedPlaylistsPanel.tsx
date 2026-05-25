@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getValidAccessToken } from '../../features/auth/spotifyAuth'
 import { spotifyConfig } from '../../app/config'
-import { getUserPlaylists, play, searchPlaylists } from '../../features/spotify/spotifyApi'
+import { getUserPlaylists, play } from '../../features/spotify/spotifyApi'
 import type { SpotifyPlaylist } from '../../features/spotify/spotifyTypes'
 import { paths } from '../../app/paths'
 

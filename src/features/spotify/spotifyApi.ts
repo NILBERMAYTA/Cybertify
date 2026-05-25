@@ -8,6 +8,7 @@ import type {
   SpotifyUserPlaylistsResponse,
   SpotifyCategoriesResponse,
   SpotifySearchPlaylistsResponse,
+  SpotifyRecentlyPlayedResponse,
 } from './spotifyTypes'
 
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1'
@@ -248,6 +249,10 @@ export function getCategoryPlaylists(accessToken: string, categoryId: string, li
 
 export function getCategories(accessToken: string, limit = 10, signal?: AbortSignal) {
   return spotifyFetch<SpotifyCategoriesResponse>(`/browse/categories?limit=${limit}`, accessToken, { signal })
+}
+
+export function getRecentlyPlayedTracks(accessToken: string, limit = 10, signal?: AbortSignal) {
+  return spotifyFetch<SpotifyRecentlyPlayedResponse>(`/me/player/recently-played?limit=${limit}`, accessToken, { signal })
 }
 
 export const fetchProfile = getCurrentUser

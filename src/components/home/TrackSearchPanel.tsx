@@ -206,9 +206,9 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
       <input
         className="w-full border bg-[#222] px-3 py-2 text-xs normal-case outline-none transition-all duration-300 placeholder:opacity-50"
         style={{
-          borderColor: isOpen || query ? 'var(--color-dynamic-primary, #444)' : '#444',
+          borderColor: 'var(--color-dynamic-primary, #444)',
           color: 'var(--color-dynamic-primary, #ddd)',
-          boxShadow: isOpen || query ? '0 0 8px var(--color-dynamic-glow, transparent)' : 'none'
+          boxShadow: isOpen || query ? '0 0 10px var(--color-dynamic-glow, transparent)' : '0 0 2px var(--color-dynamic-glow, transparent)'
         }}
         aria-label="Search Spotify tracks"
         onChange={(event) => setQuery(event.target.value)}
@@ -223,22 +223,31 @@ function TrackSearchPanelComponent({ onTrackPlayed }: TrackSearchPanelProps) {
         <p className="absolute left-0 top-full mt-1 text-[10px] normal-case text-[#777]">{status}</p>
       ) : null}
       {isOpen && results.length ? (
-        <div className="absolute left-0 right-0 top-full z-30 mt-6 grid max-h-72 gap-1 overflow-y-auto border border-[#333] bg-[#121212] p-2 shadow-2xl">
+        <div 
+          className="absolute left-0 right-0 top-full z-30 mt-6 grid max-h-72 gap-1 overflow-y-auto border bg-[#121212] p-2 shadow-2xl"
+          style={{
+            borderColor: 'var(--color-dynamic-primary, #333)',
+            boxShadow: '0 0 15px var(--color-dynamic-glow, transparent)'
+          }}
+        >
           {results.map((track) => (
             <button
-              className="grid grid-cols-[36px_1fr_auto] items-center gap-2 border border-[#2b2b2b] bg-[#1a1a1a] p-2 text-left hover:border-[#666] focus:border-[#888] focus:outline-none"
+              className="group grid grid-cols-[36px_1fr_auto] items-center gap-2 border border-[#2b2b2b] bg-[#1a1a1a] p-2 text-left focus:outline-none transition-colors"
+              style={{
+                outlineColor: 'var(--color-dynamic-primary)'
+              }}
               key={track.id}
               onClick={() => void handlePlayTrack(track)}
               type="button"
             >
               <img className="h-9 w-9 object-cover" src={track.album.images[0]?.url} alt="" />
               <span className="min-w-0 normal-case">
-                <span className="block truncate text-xs text-white">{track.name}</span>
+                <span className="block truncate text-xs text-white group-hover:text-[var(--color-dynamic-primary,#00f5ff)] transition-colors">{track.name}</span>
                 <span className="block truncate text-[11px] text-[#999]">
                   {track.artists.map((artist) => artist.name).join(', ')}
                 </span>
               </span>
-              <span className="text-[10px] uppercase text-[#999]">Play</span>
+              <span className="text-[10px] uppercase text-[#999] group-hover:text-[var(--color-dynamic-primary,#00f5ff)] transition-colors">Play</span>
             </button>
           ))}
         </div>

@@ -91,28 +91,35 @@ function SpotifyProfilePanelComponent() {
   const avatar = profile.images[0]
 
   return (
-    <div className="grid gap-4 md:grid-cols-[96px_1fr]">
-      <div className="h-24 w-24 overflow-hidden border border-[#333] bg-[#1a1a1a]">
+    <div className="relative grid gap-6 md:grid-cols-[120px_1fr]">
+      <a 
+        href={profile.external_urls.spotify} 
+        target="_blank" 
+        rel="noreferrer"
+        className="block h-[120px] w-[120px] overflow-hidden border border-[#333] bg-[#1a1a1a] transition-all hover:scale-105 hover:border-[var(--color-dynamic-primary,#00f5ff)] hover:shadow-[0_0_15px_var(--color-dynamic-glow,rgba(0,245,255,0.3))] cursor-pointer"
+        title="Open Spotify profile"
+      >
         {avatar ? <img className="h-full w-full object-cover" src={avatar.url} alt={profile.display_name ?? profile.id} /> : null}
-      </div>
+      </a>
       <div className="text-sm text-[#999]">
         <p className="mb-2 uppercase tracking-wider text-green-400">Login correcto</p>
         <h1 className="mb-3 text-2xl font-bold uppercase text-white">{profile.display_name ?? profile.id}</h1>
         <p>User ID: {profile.id}</p>
         <p>Email: {profile.email ?? 'Not available'}</p>
         <p>Spotify URI: {profile.uri}</p>
-        <div className="mt-3 flex flex-wrap gap-3">
-          <Link className="text-blue-400 underline" to={paths.player}>
-            Open Cybertify player
-          </Link>
-          <a className="text-blue-400 underline" href={profile.external_urls.spotify} target="_blank" rel="noreferrer">
-            Open Spotify profile
-          </a>
-          <button className="text-red-400 underline" type="button" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
       </div>
+      <button 
+        className="absolute top-0 right-0 rounded border px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all hover:scale-105" 
+        style={{ 
+          borderColor: 'var(--color-dynamic-primary, #00f5ff)', 
+          color: 'var(--color-dynamic-primary, #00f5ff)',
+          boxShadow: '0 0 10px var(--color-dynamic-glow, transparent)'
+        }}
+        type="button" 
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
     </div>
   )
 }

@@ -57,12 +57,12 @@ function PlaylistCarousel({ section }: { section: PlaylistSection }) {
       {/* Contenedor con scroll horizontal */}
       <div 
         ref={scrollRef}
-        className="flex w-full overflow-x-auto gap-4 pb-4 scrollbar-hide snap-x scroll-smooth"
+        className="flex w-full overflow-x-auto gap-4 pt-4 pb-6 px-1 scrollbar-hide snap-x scroll-smooth"
       >
         {section.playlists.map((playlist) => (
           <div 
             key={playlist.id} 
-            className="group relative flex cursor-pointer flex-col overflow-hidden rounded-md border border-[#333] bg-[#1a1a1a] transition-all hover:border-[#00f5ff] hover:shadow-[0_0_15px_rgba(0,245,255,0.2)] hover:-translate-y-1 min-w-[140px] max-w-[140px] sm:min-w-[160px] sm:max-w-[160px] snap-start shrink-0"
+            className="group relative flex cursor-pointer flex-col overflow-hidden rounded-md border border-[#333] bg-[#1a1a1a] transition-all hover:border-[var(--color-dynamic-primary,#00f5ff)] hover:shadow-[0_0_15px_var(--color-dynamic-glow,rgba(0,245,255,0.2))] hover:-translate-y-1 min-w-[140px] max-w-[140px] sm:min-w-[160px] sm:max-w-[160px] snap-start shrink-0"
             onClick={() => void handlePlay(playlist.uri)}
           >
             <div className="aspect-square w-full overflow-hidden">
@@ -78,14 +78,14 @@ function PlaylistCarousel({ section }: { section: PlaylistSection }) {
                 </div>
               )}
               
-              <div className="absolute right-2 bottom-[4.5rem] flex h-10 w-10 items-center justify-center rounded-full bg-[#00f5ff] text-black opacity-0 shadow-[0_0_15px_#00f5ff] transition-all duration-300 group-hover:opacity-100 group-hover:-translate-y-2">
+              <div className="absolute right-2 bottom-[4.5rem] flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-dynamic-primary,#00f5ff)] text-black opacity-0 shadow-[0_0_15px_var(--color-dynamic-glow,rgba(0,245,255,0.5))] transition-all duration-300 group-hover:opacity-100 group-hover:-translate-y-2">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="ml-1 h-5 w-5">
                   <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
                 </svg>
               </div>
             </div>
             <div className="flex flex-col p-3">
-              <h3 className="truncate text-sm font-medium text-white group-hover:text-[#00f5ff] transition-colors">{playlist.name}</h3>
+              <h3 className="truncate text-sm font-medium text-white group-hover:text-[var(--color-dynamic-primary,#00f5ff)] transition-colors">{playlist.name}</h3>
               <p className="mt-1 line-clamp-2 text-xs text-[#999]" title={playlist.description}>
                 {playlist.description || `De ${playlist.owner?.display_name || 'Spotify'}`}
               </p>

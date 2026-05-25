@@ -5,6 +5,7 @@ import { TerminalPanel } from '../components/layout/TerminalPanel'
 import { TerminalShell } from '../components/layout/TerminalShell'
 import { SpotifyProfilePanel } from '../components/profile/SpotifyProfilePanel'
 import { RecommendedPlaylistsPanel } from '../components/home/RecommendedPlaylistsPanel'
+import { CurrentPlayingBar } from '../components/home/CurrentPlayingBar'
 
 function HomePageComponent() {
   return (
@@ -18,6 +19,7 @@ function HomePageComponent() {
       <TerminalPanel title="auth / profile">
         <SpotifyProfilePanel />
       </TerminalPanel>
+      <CurrentPlayingBar />
       <TerminalPanel title="recommended playlists">
         <RecommendedPlaylistsPanel />
       </TerminalPanel>

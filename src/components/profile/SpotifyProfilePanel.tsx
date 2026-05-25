@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { paths } from '../../app/paths'
 import { getStoredSpotifySession, logout, refreshAccessToken } from '../../features/auth/spotifyAuth'
